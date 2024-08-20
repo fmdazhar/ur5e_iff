@@ -39,5 +39,5 @@
 	branch = ros1
 [submodule "catkin_ws/src/aruco_ros"]
 	path = catkin_ws/src/aruco_ros
-	url = https://github.com/pal-robotics/aruco_ros.git
+	url = https://github.com/fmdazhar/aruco_ros.git
 	branch = noetic-devel
