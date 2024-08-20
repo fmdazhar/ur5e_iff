@@ -1,0 +1,35 @@
+[submodule "catkin_ws/src/universal_robots/Universal_Robots_Client_Library"]
+	path = catkin_ws/src/universal_robots/Universal_Robots_Client_Library
+	url = https://github.com/UniversalRobots/Universal_Robots_Client_Library.git
+	branch = boost
+[submodule "catkin_ws/src/universal_robots/Universal_Robots_ROS_Driver"]
+	path = catkin_ws/src/universal_robots/Universal_Robots_ROS_Driver
+	url = https://github.com/UniversalRobots/Universal_Robots_ROS_Driver.git
+	branch = master
+[submodule "catkin_ws/src/universal_robots/universal_robot"]
+	path = catkin_ws/src/universal_robots/universal_robot
+	url = https://github.com/ros-industrial/universal_robot.git
+	branch = melodic-devel-staging
+[submodule "catkin_ws/src/robotiq"]
+	path = catkin_ws/src/robotiq
+	url = https://github.com/fmdazhar/robotiq
+	branch = noetic-devel
+[submodule "catkin_ws/src/gazebo_pkgs/roboticsgroup_upatras_gazebo_plugins"]
+	path = catkin_ws/src/gazebo_pkgs/roboticsgroup_upatras_gazebo_plugins
+	url = https://github.com/fmdazhar/roboticsgroup_upatras_gazebo_plugins.git
+	branch = master
+[submodule "catkin_ws/src/gazebo_pkgs/gazebo_gripper_action_controller"]
+	path = catkin_ws/src/gazebo_pkgs/gazebo_gripper_action_controller
+	url = https://github.com/fmdazhar/Gazebo-Gripper-Action-Controller.git
+	branch = melodic-devel
+[submodule "catkin_ws/src/controllers/low_pass_force_torque_sensor_controller"]
+	path = catkin_ws/src/controllers/low_pass_force_torque_sensor_controller
+	url = https://github.com/fmdazhar/Low-Pass-Force-Torque-Sensor-Controller.git
+	branch = noetic-devel
+[submodule "catkin_ws/src/controllers/compliant_trajectory_control"]
+	path = catkin_ws/src/controllers/compliant_trajectory_control
+	url = https://github.com/fmdazhar/CompliantTrajectoryControl.git
+[submodule "catkin_ws/src/controllers/cartesian_controllers"]
+	path = catkin_ws/src/controllers/cartesian_controllers
+	url = https://github.com/fmdazhar/cartesian_controllers.git
+	branch = ros1
