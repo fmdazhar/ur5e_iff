@@ -33,3 +33,7 @@
 	path = catkin_ws/src/controllers/cartesian_controllers
 	url = https://github.com/fmdazhar/cartesian_controllers.git
 	branch = ros1
+[submodule "catkin_ws/src/aruco_ros"]
+	path = catkin_ws/src/aruco_ros
+	url = https://github.com/pal-robotics/aruco_ros.git
+	branch = noetic-devel
