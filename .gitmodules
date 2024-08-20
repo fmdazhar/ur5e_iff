@@ -14,6 +14,10 @@
 	path = catkin_ws/src/robotiq
 	url = https://github.com/fmdazhar/robotiq
 	branch = noetic-devel
+[submodule "catkin_ws/src/onrobot"]
+	path = catkin_ws/src/onrobot
+	url = https://github.com/fmdazhar/OnRobot-RG2FT-ROS.git
+	branch = noetic-devel
 [submodule "catkin_ws/src/gazebo_pkgs/roboticsgroup_upatras_gazebo_plugins"]
 	path = catkin_ws/src/gazebo_pkgs/roboticsgroup_upatras_gazebo_plugins
 	url = https://github.com/fmdazhar/roboticsgroup_upatras_gazebo_plugins.git
