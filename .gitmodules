@@ -9,7 +9,7 @@
 [submodule "catkin_ws/src/universal_robots/universal_robot"]
 	path = catkin_ws/src/universal_robots/universal_robot
 	url = https://github.com/ros-industrial/universal_robot.git
-	branch = melodic-devel-staging
+	branch = noetic-devel
 [submodule "catkin_ws/src/robotiq"]
 	path = catkin_ws/src/robotiq
 	url = https://github.com/fmdazhar/robotiq
