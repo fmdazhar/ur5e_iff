@@ -12,12 +12,12 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && rm -rf /var/lib/apt/lists/*
 RUN dpkg-reconfigure locales
 
-# Install ROS Noetic Desktop Full
-RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
-RUN curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add -
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ros-noetic-desktop-full \
-    && rm -rf /var/lib/apt/lists/*
+# # Install ROS Noetic Desktop Full
+# RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
+# RUN curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add -
+# RUN apt-get update && apt-get install -y --no-install-recommends \
+#     ros-noetic-desktop-full \
+#     && rm -rf /var/lib/apt/lists/*
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-rosdep \
@@ -47,6 +47,12 @@ RUN pip3 install \
     pymodbus===2.1.0 \
     numpy \
     scipy 
+
+# Install dependencies
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    ros-noetic-realsense2-camera ros-noetic-realsense2-description ros-noetic-rqt-controller-manager \
+    libspnav-dev spacenavd ros-noetic-spacenav-node \
+    && pip3 install numpy-quaternion open3d
 
 # Install ROS dependencies
 RUN apt-get update && apt-get install --no-install-recommends -y \
