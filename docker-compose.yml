@@ -1,4 +1,3 @@
-version: '3.9'
 services:
   noetic-ur:
     build:
@@ -18,6 +17,8 @@ services:
       - /tmp/.X11-unix:/tmp/.X11-unix
       - "/dev:/dev"
       - ./catkin_ws/src:/root/catkin_ws/src
+      # Grant access to 3D mouse 
+      - /var/run/spnav.sock:/var/run/spnav.sock
     # deploy:
     #   resources:
     #     reservations:
