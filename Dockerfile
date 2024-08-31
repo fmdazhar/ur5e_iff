@@ -53,8 +53,8 @@ RUN pip3 install \
 # Install dependencies
 RUN apt-get update && apt-get install --no-install-recommends -y \
     ros-noetic-realsense2-camera ros-noetic-realsense2-description ros-noetic-rqt-controller-manager \
-    libspnav-dev spacenavd ros-noetic-spacenav-node \
-    && pip3 install numpy-quaternion open3d
+    libspnav-dev spacenavd libhidapi-dev\
+    && pip3 install numpy-quaternion open3d pyspacemouse https://github.com/kazoo-osaro/spnav/archive/c1c938ebe3cc542db4685e0d13850ff1abfdb943.tar.gz
 
 # Install ROS dependencies
 RUN apt-get update && apt-get install --no-install-recommends -y \

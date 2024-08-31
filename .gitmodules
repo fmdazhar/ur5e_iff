@@ -37,3 +37,7 @@
 	path = catkin_ws/src/controllers/cartesian_controllers
 	url = https://github.com/fmdazhar/cartesian_controllers.git
 	branch = ros1
+[submodule "catkin_ws/src/controllers/spacenav"]
+	path = catkin_ws/src/controllers/spacenav
+	url = https://github.com/fmdazhar/spacenav.git
+	branch = main

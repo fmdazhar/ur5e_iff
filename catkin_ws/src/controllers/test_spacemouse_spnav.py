@@ -97,7 +97,7 @@ class Spacemouse(Thread):
 
 
 def test():
-    with Spacemouse(deadzone=0.3) as sm:
+    with Spacemouse(deadzone=0.1) as sm:
         for i in range(2000):
             # print(sm.get_motion_state())
             print(sm.get_motion_state_transformed())
