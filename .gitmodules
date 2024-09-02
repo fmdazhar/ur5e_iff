@@ -39,5 +39,5 @@
 	branch = ros1
 [submodule "catkin_ws/src/controllers/spacenav"]
 	path = catkin_ws/src/controllers/spacenav
-	url = https://github.com/fmdazhar/spacenav.git
+	url = https://github.com/fmdazhar/spacenav_node.git
 	branch = main

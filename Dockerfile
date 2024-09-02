@@ -54,7 +54,7 @@ RUN pip3 install \
 RUN apt-get update && apt-get install --no-install-recommends -y \
     ros-noetic-realsense2-camera ros-noetic-realsense2-description ros-noetic-rqt-controller-manager \
     libspnav-dev spacenavd libhidapi-dev\
-    && pip3 install numpy-quaternion open3d pyspacemouse https://github.com/kazoo-osaro/spnav/archive/c1c938ebe3cc542db4685e0d13850ff1abfdb943.tar.gz
+    && pip3 install numpy-quaternion open3d pyspacemouse 
 
 # Install ROS dependencies
 RUN apt-get update && apt-get install --no-install-recommends -y \
@@ -80,3 +80,14 @@ RUN source /opt/ros/noetic/setup.bash && \
 
 # Source the workspace setup files on container startup
 RUN echo "source /root/catkin_ws/devel/setup.bash" >> ~/.bashrc
+
+# After building the ROS workspace, add the GUI control configuration for Gazebo
+RUN mkdir -p ~/.gazebo && \
+    echo "[spacenav]" >> ~/.gazebo/gui.ini && \
+    echo "deadband_x = 0.1" >> ~/.gazebo/gui.ini && \
+    echo "deadband_y = 0.1" >> ~/.gazebo/gui.ini && \
+    echo "deadband_z = 0.1" >> ~/.gazebo/gui.ini && \
+    echo "deadband_rx = 0.1" >> ~/.gazebo/gui.ini && \
+    echo "deadband_ry = 0.1" >> ~/.gazebo/gui.ini && \
+    echo "deadband_rz = 0.1" >> ~/.gazebo/gui.ini && \
+    echo "topic=~/spacenav/remapped_joy_topic_to_something_not_used" >> ~/.gazebo/gui.ini
