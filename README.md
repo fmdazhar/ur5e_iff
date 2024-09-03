@@ -72,8 +72,6 @@ Note that the same commands for "a_bot" also apply for "b_bot" and "c_bot"—jus
 
 ```
 roslaunch noetic_fake a_bot_fake.launch
-
-
 ```
 
 ### Start the Simulated Robot in Gazebo
