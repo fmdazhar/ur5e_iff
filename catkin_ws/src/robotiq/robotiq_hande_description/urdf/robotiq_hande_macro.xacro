@@ -2,9 +2,9 @@
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
 
   <xacro:include
-    filename="$(find robotiq_description)/urdf/inc/robotiq_hande.transmissions.xacro" />
+    filename="$(find robotiq_hande_description)/urdf/inc/robotiq_hande.transmissions.xacro" />
   <xacro:include
-    filename="$(find robotiq_description)/urdf/inc/robotiq_hande_gazebo.xacro" />
+    filename="$(find robotiq_hande_description)/urdf/inc/robotiq_hande_gazebo.xacro" />
 
   <xacro:macro name="robotiq_hande"
     params="
@@ -27,7 +27,7 @@
       <visual>
         <origin rpy="0 0 0" xyz="0 0 0"/>
         <geometry>
-          <mesh filename="package://robotiq_description/meshes/hande/finger_1.dae" scale="1.0 1.0 1.0"/>
+          <mesh filename="package://robotiq_hande_description/meshes/hande/finger_1.dae" scale="1.0 1.0 1.0"/>
         </geometry>
         <material name="DarkGray">
           <color rgba=".4 0.4 0.4 1.0"/>
@@ -36,7 +36,7 @@
       <collision>
         <origin rpy="0 0 0" xyz="0 0 0"/>
         <geometry>
-          <mesh filename="package://robotiq_description/meshes/hande/finger_1-collision.dae" scale="1.0 1.0 1.0"/>
+          <mesh filename="package://robotiq_hande_description/meshes/hande/finger_1-collision.dae" scale="1.0 1.0 1.0"/>
         </geometry>
       </collision>
     </link>
@@ -49,7 +49,7 @@
       <visual>
         <origin rpy="0 0 0" xyz="0 0 0"/>
         <geometry>
-          <mesh filename="package://robotiq_description/meshes/hande/finger_2.dae" scale="1.0 1.0 1.0"/>
+          <mesh filename="package://robotiq_hande_description/meshes/hande/finger_2.dae" scale="1.0 1.0 1.0"/>
         </geometry>
         <material name="DarkGray">
           <color rgba=".4 0.4 0.4 1.0"/>
@@ -58,7 +58,7 @@
       <collision>
         <origin rpy="0 0 0" xyz="0 0 0"/>
         <geometry>
-          <mesh filename="package://robotiq_description/meshes/hande/finger_2-collision.dae" scale="1.0 1.0 1.0"/>
+          <mesh filename="package://robotiq_hande_description/meshes/hande/finger_2-collision.dae" scale="1.0 1.0 1.0"/>
         </geometry>
       </collision>
     </link>
@@ -166,7 +166,7 @@
       <visual>
         <origin rpy="0 0 0" xyz="0 0 0"/>
         <geometry>
-          <mesh filename="package://robotiq_description/meshes/hande/hand-e.dae" scale="1.0 1.0 1.0"/>
+          <mesh filename="package://robotiq_hande_description/meshes/hande/hand-e.dae" scale="1.0 1.0 1.0"/>
         </geometry>
         <material name="Dark">
           <color rgba=".1 0.1 0.1 1.0"/>
@@ -175,7 +175,7 @@
       <collision>
         <origin rpy="0 0 0" xyz="0 0 0"/>
         <geometry>
-          <mesh filename="package://robotiq_description/meshes/hande/hand-e-collision.dae" scale="1.0 1.0 1.0"/>
+          <mesh filename="package://robotiq_hande_description/meshes/hande/hand-e-collision.dae" scale="1.0 1.0 1.0"/>
         </geometry>
       </collision>
     </link>
