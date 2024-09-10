@@ -1,8 +1,8 @@
 # Ignore ROS workspace build, devel, logs, and catkin tools directories
-/build/
-/devel/
-/logs/
-/.catkin_tools/
+/catkin_ws/build/
+/catkin_ws/devel/
+/catkin_ws/logs/
+/catkin_ws/.catkin_tools/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
