@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>robotiq_description</name>
+  <name>robotiq_hande_description</name>
   <version>0.1.0</version>
-  <description>The robotiq_description package</description>
+  <description>The robotiq_hande_description package</description>
 
   <maintainer email="fsuarez.ruiz@pmail.ntu.edu.sg">Francisco Suarez Ruiz</maintainer>
   <license>BSD</license>

@@ -4,7 +4,7 @@
     <xacro:include filename="$(find noetic_description)/urdf/macros/ur5e_macro.xacro" />
     <xacro:include filename="$(find noetic_description)/urdf/macros/d415_mount_macro.xacro" />
     <xacro:include
-        filename="$(find robotiq_description)/urdf/robotiq_hande_macro.xacro" />
+        filename="$(find robotiq_hande_description)/urdf/robotiq_hande_macro.xacro" />
 
     <xacro:macro name="c_bot"
         params="
