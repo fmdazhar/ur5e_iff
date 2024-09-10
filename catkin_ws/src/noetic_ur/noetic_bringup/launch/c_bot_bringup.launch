@@ -52,7 +52,7 @@
     />
 
     <!-- launch gripper driver -->
-    <include file="$(find robotiq_2f_gripper_control)/launch/robotiq_2f_85_gripper_rtu.launch">
+    <include file="$(find robotiq_2f_gripper_control)/launch/robotiq_hande_gripper_rtu.launch">
         <arg name="port" value="$(arg tool_device_name)" />
     </include>
 
