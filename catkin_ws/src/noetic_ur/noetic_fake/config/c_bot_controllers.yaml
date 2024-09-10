@@ -26,7 +26,7 @@ pos_joint_traj_controller:
 
 gripper_action_controller:
   type: position_controllers/GripperActionController
-  joint: finger_joint
+  joint: hande_left_finger_joint
 
 joint_group_pos_controller:
   type: position_controllers/JointGroupPositionController
@@ -34,7 +34,7 @@ joint_group_pos_controller:
 
 gripper_pos_controller:
   type: position_controllers/JointPositionController
-  joint: finger_joint
+  joint: hande_left_finger_joint
 
 motion_control_handle:
   type: "cartesian_controllers/MotionControlHandle"

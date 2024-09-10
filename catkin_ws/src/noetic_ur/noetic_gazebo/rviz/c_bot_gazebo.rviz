@@ -122,57 +122,12 @@ Visualization Manager:
             Show Axes: false
             Show Trail: false
             Value: true
-          left_inner_finger:
+          hande_left_finger:
             Alpha: 1
             Show Axes: false
             Show Trail: false
             Value: true
-          left_inner_finger_pad:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          left_inner_knuckle:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          left_outer_finger:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          left_outer_knuckle:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          right_inner_finger:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          right_inner_finger_pad:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          right_inner_knuckle:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          right_outer_finger:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          right_outer_knuckle:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          shoulder_link:
+          hande_right_finger:
             Alpha: 1
             Show Axes: false
             Show Trail: false
@@ -302,57 +257,12 @@ Visualization Manager:
             Show Axes: false
             Show Trail: false
             Value: true
-          left_inner_finger:
+          hande_left_finger:
             Alpha: 1
             Show Axes: false
             Show Trail: false
             Value: true
-          left_inner_finger_pad:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          left_inner_knuckle:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          left_outer_finger:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          left_outer_knuckle:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          right_inner_finger:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          right_inner_finger_pad:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          right_inner_knuckle:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          right_outer_finger:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          right_outer_knuckle:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          shoulder_link:
+          hande_right_finger:
             Alpha: 1
             Show Axes: false
             Show Trail: false
