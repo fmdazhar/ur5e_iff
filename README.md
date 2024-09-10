@@ -1,4 +1,4 @@
-# noetic-UR5e
+# Noetic-UR5e
 
 Docker file and docker-compose for ROS noetic supporting packages for the UR5e and Robotiq Hand-e gripper. The compose file starts two containers: the one running ROS and another running [noVNC](https://novnc.com/info.html) to use the GUI-based tools rviz and Gazebo.
 
@@ -42,7 +42,7 @@ Follow these steps to set up your environment for UR5e robot development:
 
 The Docker container sets up a ROS workspace in `/root/catkin_ws`.
 
-There are two UR5e robots used in the lab. "a_bot" refers to the UR5e with a Robotiq 2F-85 Gripper, "b_bot" refers to the UR5e with the OnRobot RG2-FT Gripper, and "c_bot" refers to the UR5e with the Robotiq Hand-e Gripper.
+There are three UR5e robots used in the lab. "a_bot" refers to the UR5e with a Robotiq 2F-85 Gripper, "b_bot" refers to the UR5e with the OnRobot RG2-FT Gripper, and "c_bot" refers to the UR5e with the Robotiq Hand-e Gripper.
 
 Within this workspace, you'll find the custom configuration packages specific to running the robots in the lab:
 
@@ -71,13 +71,13 @@ Note that the same commands for "a_bot" also apply for "b_bot" and "c_bot"—jus
 ### Start the Simulated Robot in MoveIt!
 
 ```
-roslaunch noetic_fake a_bot_fake.launch
+roslaunch noetic_fake c_bot_fake.launch
 ```
 
 ### Start the Simulated Robot in Gazebo
 
 ```
-roslaunch noetic_gazebo a_bot_gazebo.launch
+roslaunch noetic_gazebo c_bot_gazebo.launch
 ```
 
 ### Running the Real Robot
@@ -86,23 +86,23 @@ Follow these steps to run the real robot:
 
 1. **Set Up External Control URCap**: Follow the steps for setting up external control URCap and programming on the UR teach pendant. This only needs to be done once. Refer to [this guide](https://github.com/UniversalRobots/Universal_Robots_ExternalControl_URCap).
 
-2. **Calibrate the Real Robot**: Calibrate the real robot using the following command, replacing `<a_bot robot ip>` with the actual IP of the "a_bot" robot:
+2. **Calibrate the Real Robot**: Calibrate the real robot using the following command, replacing `<c_bot robot ip>` with the actual IP of the "c_bot" robot:
 
    ```bash
-   roslaunch noetic_bringup a_bot_calibration.launch robot_ip:=<a_bot robot ip>
+   roslaunch noetic_bringup c_bot_calibration.launch robot_ip:=<c_bot robot ip>
    ```
 
-3. **Start Up the Real Robot**: Launch the real robot using the following command, replacing `<a_bot robot ip>` with the actual IP of the "a_bot" robot and `<host computer ip>` with the IP of your host computer:
+3. **Start Up the Real Robot**: Launch the real robot using the following command, replacing `<c_bot robot ip>` with the actual IP of the "c_bot" robot and `<host computer ip>` with the IP of your host computer:
 
    ```bash
-   roslaunch noetic_bringup a_bot_bringup.launch robot_ip:=<a_bot robot ip> reverse_ip:=<host computer ip>
+   roslaunch noetic_bringup c_bot_bringup.launch robot_ip:=<c_bot robot ip> reverse_ip:=<host computer ip>
    ```
 
 4. **Run the External Control Program**: Run the external control program you have set up on the teach pendant.
 
 ### Running Different Controllers for the UR5e
 
-There are various controllers available for the robot as part of ROS control. You can find their configurations in `catkin_ws/src/noetic_ur/noetic_bringup/config/a_bot_controllers.yaml` (or `b_bot_controllers.yaml`).
+There are various controllers available for the robot as part of ROS control. You can find their configurations in `catkin_ws/src/noetic_ur/noetic_bringup/config/c_bot_controllers.yaml` 
 
 To work with different controllers:
 
