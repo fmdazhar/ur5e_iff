@@ -1,19 +1,29 @@
 
+"""
+A general robot arm
+"""
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
+
 import PyKDL as kdl
 from kdl_parser_py.urdf import treeFromParam
 from trac_ik_python import trac_ik
 import rospy
 import numpy as np
-import utils.common as arutil
+import real.utils.common as arutil
+import copy
+from real.utils.ros_util import joints_to_kdl
+from real.utils.ros_util import kdl_array_to_numpy
+from real.utils.ros_util import kdl_frame_to_numpy
 
 
 class RobotServer:
     def __init__(self, cfgs):
         self.cfgs = cfgs
         self._init_real_consts()
-        self._init_ros_consts()
-        self._setup_pub_sub()
-        self.is_jpos_in_good_range()
+
 
     def _init_real_consts(self):
         """
@@ -38,41 +48,34 @@ class RobotServer:
         self._fk_solver_pos = kdl.ChainFkSolverPos_recursive(self._urdf_chain)
         self._fk_solver_vel = kdl.ChainFkSolverVel_recursive(self._urdf_chain)
 
-    def _init_ros_consts(self):
-        """Initialize ROS constants; to be implemented in derived classes."""
-        pass
-
-    def _setup_pub_sub(self):
-        """Initialize ROS publishers and subscribers; to be implemented in derived classes."""
-        pass
 
     def is_jpos_in_good_range(self):
         """Check if joint positions are within acceptable range."""
-        pass
+        raise NotImplementedError
 
     def get_jpos(self, joint_name=None):
         """Get current joint positions."""
-        pass
+        raise NotImplementedError
 
     def get_jvel(self, joint_name=None):
         """Get current joint velocities."""
-        pass
+        raise NotImplementedError
 
     def get_ee_pose(self):
         """Get current end-effector pose."""
-        pass
+        raise NotImplementedError
 
     def get_ee_vel(self):
         """Get current end-effector velocity."""
-        pass
+        raise NotImplementedError
 
     def set_jpos(self, position, joint_name=None, wait=True, *args, **kwargs):
         """Set joint positions."""
-        pass
+        raise NotImplementedError
 
     def set_jvel(self, velocity, wait=False, *args, **kwargs):
         """Set joint velocities."""
-        pass
+        raise NotImplementedError
 
     def get_ee_pose(self):
         """
@@ -93,11 +96,9 @@ class RobotServer:
         """
         raise NotImplementedError
     
-    
     def move_ee_xyz(self, delta_xyz, wait=True, *args, **kwargs):
         """Move end-effector in XYZ directions."""
-        pass
-
+        raise NotImplementedError
 
     def compute_ik(self, pos, ori=None, qinit=None, *args, **kwargs):
         """
@@ -231,7 +232,7 @@ class RobotServer:
         num_links = self._urdf_chain.getNrOfSegments()
         link_names = []
         for i in range(num_links):
-            link_names.append(_urdf_chain.getSegment(i).getName())
+            link_names.append(self._urdf_chain.getSegment(i).getName())
         return copy.deepcopy(link_names)
 
     def get_jacobian(self, joint_angles):

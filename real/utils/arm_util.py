@@ -2,8 +2,8 @@ import time
 
 import numpy as np
 
-import airobot as ar
-import airobot.utils.common as arutil
+import real as ar
+import real.utils.common as arutil
 
 
 def wait_to_reach_jnt_goal(goal, get_func, joint_name=None,

@@ -15,20 +15,14 @@ import tf
 from std_msgs.msg import String
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from sensor_msgs.msg import JointState
-from controller_util import (
-    check_state,
-    check_parameter_server,
-    start_controller,
-    stop_controller,
-    switch_on_controller
-)
+from real.utils.controller_utils import ControllerUtil
 from geometry_msgs.msg import PoseStamped, WrenchStamped
 
 
 
-import utils.common as arutil
-from utils.ros_util import get_tf_transform
-from utils.arm_util import wait_to_reach_jnt_goal, wait_to_reach_ee_goal
+import real.utils.common as arutil
+from real.utils.ros_util import get_tf_transform
+from real.utils.arm_util import wait_to_reach_jnt_goal, wait_to_reach_ee_goal
 
 class UR5eRealServer(RobotServer):
     """
@@ -49,6 +43,8 @@ class UR5eRealServer(RobotServer):
         self._init_ros_consts()
         self._setup_pub_sub()
         self.is_jpos_in_good_range()
+        self.controller_util = ControllerUtil()  # Instantiate ControllerUtil here
+
 
         # Wait until controller spawner is done
         time.sleep(1)
@@ -373,25 +369,20 @@ class UR5eRealServer(RobotServer):
                 positions=position))
         self._joint_pos_pub.publish(goal_pos_msg)
 
-    def reset_joint(self, use_urscript=False):
+    def reset_joint(self, position, use_urscript=False):
         """Resets Joints (needed after running for hours)"""
 
-        if _use_urscript:
+        if position is None:
+            position = self._reset_position
+
+        success = False
+        if use_urscript:
             # Use URScript
-            prog = 'movej([%f, %f, %f, %f, %f, %f],' \
-                   ' a=%f, v=%f)' % (self._reset_position[0],
-                                     self._reset_position[1],
-                                     self._reset_position[2],
-                                     self._reset_position[3],
-                                     self._reset_position[4],
-                                     self._reset_position[5],
-                                     self._motion_acc,
-                                     self._motion_vel)
-            self._send_urscript(prog)
+            success = self.set_jpos(self.position, use_urscript = True, wait=True)
         else:
             # First motion controller
             try:
-                switch_on_controller(self.cfgs.ARM.ROBOT_JOINT_TRAJECTORY_CONTROLLER,
+                self.controller_util.switch_on_controller(self.cfgs.ARM.ROBOT_JOINT_TRAJECTORY_CONTROLLER,
                                         exclude_controllers=[self.cfgs.ARM.ROBOT_CARTESIAN_MOTION_CONTROLLER, self.cfgs.EETOOL.GRIPPER_ACTION_CONTROLLER])
             except Exception as e:
                 print(f"Error during joint reset: {e}")
@@ -400,7 +391,7 @@ class UR5eRealServer(RobotServer):
             # Launch joint controller reset
             print("RUNNING JOINT RESET")
             # Wait until target joint angles are reached
-            success = self.set_jpos(self._reset_position, wait=True)
+            success = self.set_jpos(self.position, wait=True)
             # Stop joint controller
             if success:
                 print("RESET DONE")
@@ -410,14 +401,16 @@ class UR5eRealServer(RobotServer):
 
             #start impedance back
             try:
-                switch_on_controller(self.cfgs.ARM.ROBOT_CARTESIAN_MOTION_CONTROLLER,
+                self.controller_util.switch_on_controller(self.cfgs.ARM.ROBOT_CARTESIAN_MOTION_CONTROLLER,
                                         exclude_controllers=[self.cfgs.ARM.ROBOT_CARTESIAN_MOTION_CONTROLLER, self.cfgs.EETOOL.GRIPPER_ACTION_CONTROLLER])
             except Exception as e:
                 print(f"Error during controller switch: {e}")
             time.sleep(1)
             print("KILLED JOINT RESET")
 
-    def go_home(self, pose):
+        return success
+
+    def go_to_rest(self, pose, joint_reset = False, random_reset = False, timeout = 1.5):
         """
         Move the robot to a pre-defined home pose.
         """
@@ -428,17 +421,41 @@ class UR5eRealServer(RobotServer):
         # else:
         #     print(f"[ERROR] Controller '{controller_name}' is not active. Cannot move to home position.")
         if pose is None:
-            pose = self._home_position
+            pose = self._home_pose
+        success = False
         pos = pose[:3]
         ori = pose[3:]
-        jnt_pos = self.compute_ik(pos, ori)
-        # use movej from URScript
-        success = self.set_jpos(jnt_pos, wait=True)
+        
+        # Perform joint reset if needed
+        if joint_reset:
+            print("JOINT RESET")
+            # use movej from URScript
+            self.reset_joint(self, use_urscript=True)
+
+        # Initialize reset_pos and reset_ori
+        reset_pos = pos.copy()
+        reset_ori = ori.copy()
+
+        # Perform Carteasian reset
+        if random_reset:  # randomize reset position in xy plane
+            reset_pos[:2] += np.random.uniform(
+                -self.random_xy_range, self.random_xy_range, (2,)
+            )
+            euler_random = arutil.to_euler_angles(_)
+            euler_random[-1] += np.random.uniform(
+                -self.random_rz_range, self.random_rz_range
+            )
+            reset_ori[3:] = arutil.euler_2_quat(euler_random)
+
+
+        # Direct movement to the target position without interpolation
+        success = self.set_ee_pose(reset_pos, reset_ori)
 
         if not success:
-            print('Robot go_home failed!!!')
+                print('Robot go_home failed!!!')
 
-    def set_ee_pose(self, pos=None, ori=None, wait=True, *args, **kwargs):
+    def set_ee_pose(self, pos=None, ori=None, wait=True, clip = True, interpolate = False, timeout = self.cfgs.ARM.TIMEOUT_LIMIT,
+                pos_tol = self.cfgs.ARM.MAX_EE_POS_ERROR, ori_tol = self.cfgs.ARM.MAX_EE_ORI_ERROR, *args, **kwargs):
         """
         Set cartesian space pose of end effector.
 
@@ -463,16 +480,67 @@ class UR5eRealServer(RobotServer):
         """
         if ori is None and pos is None:
             return True
+
         success = False
         if ori is None:
             pose = self.get_ee_pose()  # last index is euler angles
             quat = pose[1]
+        elif clip:
+                euler = arutil.to_euler_angles(ori)
+                # Clip first euler angle separately due to discontinuity from pi to -pi
+                sign = np.sign(euler[0])
+                euler[0] = sign * (
+                    np.clip(
+                        np.abs(euler[0]),
+                        self.rpy_bounding_box.low[0],
+                        self.rpy_bounding_box.high[0],
+                    )
+                )
+                euler[1:] = np.clip(
+                    euler[1:], self.rpy_bounding_box.low[1:], self.rpy_bounding_box.high[1:]
+                )
+                quat = arutil.to_quat(euler)
         else:
             quat = arutil.to_quat(ori)
+
         if pos is None:
             pose = self.get_ee_pose()
             pos = pose[0]
+        elif clip:
+            pos = np.clip(
+            pos, self.xyz_bounding_box.low, self.xyz_bounding_box.high
+        )
+            
+        if interpolate:
+            # Interpolate over a specified timeout
+            steps = int(timeout * self.cfgs. hz)
+            ee_pos = self.get_ee_pose()
 
+            # Create a linear path for positions
+            path = np.linspace(ee_pos, pos, steps)
+
+            for p in path:
+                # Create a PoseStamped message for each step
+                self._publish_pose(p, quat)
+                time.sleep(1 / self.hz)
+            
+        else:
+            # Direct movement to the target position without interpolation
+            self._publish_pose(pos, quat)
+
+        if wait:
+            args_dict = {
+                'get_func': self.get_ee_pose,
+                'get_func_derv': self.get_ee_vel,
+                'timeout': timeout,
+                'pos_tol': pos_tol,
+                'ori_tol': ori_tol
+            }
+            success = wait_to_reach_ee_goal(pos, quat,
+                                            **args_dict)
+        return success
+    
+    def _publish_pose(self, pos, quat):
         if not rospy.is_shutdown():
             pose = PoseStamped()
             pose.header.stamp = rospy.Time.now()
@@ -489,21 +557,8 @@ class UR5eRealServer(RobotServer):
                 self._ee_pose_pub.publish(pose)
             except rospy.ROSException:
                 # Swallow 'publish() to closed topic' error.
-                # This rarely happens on killing this node.
                 pass
-        
-        if wait:
-            args_dict = {
-                'get_func': self.get_ee_pose,
-                'get_func_derv': self.get_ee_vel,
-                'timeout': self.cfgs.ARM.TIMEOUT_LIMIT,
-                'pos_tol': self.cfgs.ARM.MAX_EE_POS_ERROR,
-                'ori_tol': self.cfgs.ARM.MAX_EE_ORI_ERROR
-            }
-            success = wait_to_reach_ee_goal(pos, quat,
-                                            **args_dict)
-        return success
-    
+
     def get_ee_vel(self):
         """
         Return the end effector's velocity.
@@ -549,7 +604,7 @@ class UR5eRealServer(RobotServer):
 
     def start_ur_driver(self):
             """Launches the impedance controller"""
-            self.imp = subprocess.Popen(
+            self.driver = subprocess.Popen(
                 [
                     "roslaunch",
                     self.ros_pkg_name,
@@ -563,5 +618,5 @@ class UR5eRealServer(RobotServer):
             
     def stop_ur_driver(self):
             """Stops the impedance controller"""
-            self.imp.terminate()
+            self.driver.terminate()
             time.sleep(1)

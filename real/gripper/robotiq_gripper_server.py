@@ -9,15 +9,7 @@ from robot_servers.gripper_server import GripperServer
 class RobotiqGripperServer(GripperServer):
     def __init__(self, gripper_ip):
         super().__init__()
-        self.gripper = subprocess.Popen(
-            [
-                "rosrun",
-                "robotiq_hande_gripper_control",
-                "Robotiq2FGripperTcpNode.py",
-                gripper_ip,
-            ],
-            stdout=subprocess.PIPE,
-        )
+
         self.gripper_state_sub = rospy.Subscriber(
             "Robotiq2FGripperRobotInput",
             inputMsg.Robotiq2FGripper_robot_input,
@@ -49,7 +41,7 @@ class RobotiqGripperServer(GripperServer):
         self.gripperpub.publish(self.gripper_command)
 
     def move(self, position):
-        gripper_command = self._generate_gripper_command(position, self.gripper_command)
+        self.gripper_command = self._generate_gripper_command(position, self.gripper_command)
         self.gripperpub.publish(self.gripper_command)
 
     def _update_gripper(self, msg):
