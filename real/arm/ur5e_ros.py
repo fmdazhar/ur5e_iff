@@ -15,11 +15,12 @@ from arm.robot_server import RobotServer
 from std_msgs.msg import String
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from sensor_msgs.msg import JointState
-from utils.controller_utils import ControllerUtil
 from geometry_msgs.msg import PoseStamped, WrenchStamped
 
 
 import utils.common as arutil
+from utils.controller_utils import ControllerUtil
+from utils.ai_logger import Logger
 from utils.ros_util import get_tf_transform
 from utils.arm_util import wait_to_reach_jnt_goal, wait_to_reach_ee_goal
 
@@ -431,7 +432,7 @@ class UR5eRealServer(RobotServer):
         if joint_reset:
             print("JOINT RESET")
             # use movej from URScript
-            self.reset_joint(self, use_urscript=True)
+            self.reset_joint(self, use_urscript=False)
 
         # Initialize reset_pos and reset_ori
         reset_pos = pos.copy()
