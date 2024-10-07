@@ -3,11 +3,11 @@ import rospy
 from robotiq_2f_gripper_control.msg import _Robotiq2FGripper_robot_output as outputMsg
 from robotiq_2f_gripper_control.msg import _Robotiq2FGripper_robot_input as inputMsg
 
-from robot_servers.gripper_server import GripperServer
+from gripper.gripper_server import GripperServer
 
 
 class RobotiqGripperServer(GripperServer):
-    def __init__(self, gripper_ip):
+    def __init__(self):
         super().__init__()
 
         self.gripper_state_sub = rospy.Subscriber(

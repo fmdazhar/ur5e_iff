@@ -9,7 +9,7 @@ built off of urscript.py, part of python-urx library
 (https://github.com/SintefManufacturing/python-urx)
 """
 
-import airobot as ar
+import ur5e_iff_real as ar
 
 
 class URScript(object):
@@ -152,6 +152,28 @@ class URScript(object):
         """
         msg = "sync()"
         self._add_line_to_program(msg)
+
+        def _send_urscript(self, prog):
+        """
+        Method to send URScript program to the URScript ROS topic.
+
+        Args:
+            prog (str): URScript program which will be sent and run on
+                the UR5e machine.
+
+        """
+        self._urscript_pub.publish(prog)
+
+    def _output_pendant_msg(self, msg):
+        """
+        Method to display a text message on the UR5e teach pendant.
+
+        Args:
+            msg (str): message to display.
+
+        """
+        prog = 'textmsg(%s)' % msg
+        self._send_urscript(prog)
 
 
 class Robotiq2F140URScript(URScript):

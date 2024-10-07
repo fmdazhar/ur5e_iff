@@ -12,11 +12,11 @@ from kdl_parser_py.urdf import treeFromParam
 from trac_ik_python import trac_ik
 import rospy
 import numpy as np
-import real.utils.common as arutil
+import utils.common as arutil
 import copy
-from real.utils.ros_util import joints_to_kdl
-from real.utils.ros_util import kdl_array_to_numpy
-from real.utils.ros_util import kdl_frame_to_numpy
+from utils.ros_util import joints_to_kdl
+from utils.ros_util import kdl_array_to_numpy
+from utils.ros_util import kdl_frame_to_numpy
 
 
 class RobotServer:
@@ -277,3 +277,43 @@ class RobotServer:
             joint_names.append(joint.getName())
         assert num_joints == len(joint_names)
         return copy.deepcopy(joint_names)
+
+
+    def _get_tip_transform(self):
+        """
+        Internal method to get the transform between the robot's
+        wrist and the tip of the gripper.
+
+        Returns:
+            2-element tuple containing
+
+            - list: Translation component of the gripper tip transform
+              (shape :math:`[3,]`).
+            - list: Euler angle orientation component of the gripper
+              tip transform. (shape :math:`[3,]`).
+        """
+        ee_frame = self.cfgs.ARM.ROBOT_EE_FRAME
+        gripper_tip_id = self.arm_link_names.index(ee_frame)
+        gripper_tip_link = self._urdf_chain.getSegment(gripper_tip_id)
+        gripper_tip_tf = kdl_frame_to_numpy(gripper_tip_link.getFrameToTip())
+        gripper_tip_pos = gripper_tip_tf[:3, 3].flatten()
+        gripper_tip_rot_mat = gripper_tip_tf[:3, :3]
+        gripper_tip_euler = arutil.rot2euler(gripper_tip_rot_mat)
+        return list(gripper_tip_pos), list(gripper_tip_euler)
+
+    def _set_tool_offset(self):
+        """
+        Internal method to send a URScript command to the robot so that
+        it updates it tool center point variable to match the URDF.
+        """
+        tool_offset_prog = 'set_tcp(p[%f, %f, %f, %f, %f, %f])' % (
+            self.gripper_tip_pos[0],
+            self.gripper_tip_pos[1],
+            self.gripper_tip_pos[2],
+            self.gripper_tip_ori[0],
+            self.gripper_tip_ori[1],
+            self.gripper_tip_ori[2]
+        )
+
+        self._output_pendant_msg(tool_offset_prog)
+        self._send_urscript(tool_offset_prog)

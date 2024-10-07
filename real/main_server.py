@@ -1,7 +1,7 @@
 
 """
-This file starts a control server running on the real time PC connected to the franka robot.
-In a screen run `python franka_server.py`
+This file starts a control server running on the real time PC connected to the UR5e robot.
+In a screen run `python main_server.py`
 """
 from flask import Flask, request, jsonify
 import numpy as np
@@ -14,16 +14,8 @@ from absl import app, flags
 import geometry_msgs.msg as geom_msg
 from dynamic_reconfigure.client import Client as ReconfClient
 
+
 FLAGS = flags.FLAGS
-flags.DEFINE_string(
-    "robot_ip", "172.16.0.2", "IP address of the franka robot's controller box"
-)
-flags.DEFINE_string(
-    "gripper_ip", "192.168.1.114", "IP address of the robotiq gripper if being used"
-)
-flags.DEFINE_string(
-    "gripper_type", "Robotiq", "Type of gripper to use: Robotiq, or None"
-)
 flags.DEFINE_list(
     "reset_joint_target",
     [0, 0, 0, -1.9, -0, 2, 0],
@@ -32,12 +24,9 @@ flags.DEFINE_list(
 
 
 def main(_):
-    ROS_PKG_NAME = "ur5e_franka_controllers"
-
-    ROBOT_IP = FLAGS.robot_ip
-    GRIPPER_IP = FLAGS.gripper_ip
-    GRIPPER_TYPE = FLAGS.gripper_type
+    ROS_PKG_NAME = "noetic_fake"
     RESET_JOINT_TARGET = FLAGS.reset_joint_target
+    GRIPPER_TYPE = "Robotiq"
 
     webapp = Flask(__name__)
 
@@ -46,170 +35,205 @@ def main(_):
         time.sleep(1)
     except Exception as e:
         raise Exception("roscore not running", e)
+    
 
     # Start ros node
     rospy.init_node("ur5e_control_api")
 
+    # Start the combined roslaunch that controls both the robot and the gripper
+    launch_command = [
+            "roslaunch",
+            ROS_PKG_NAME,
+            "c_bot_bringup.launch",
+        ]
+    
+    try:
+        ur5e_process = subprocess.Popen(launch_command, stdout=subprocess.PIPE)
+        time.sleep(5)  # Wait for the launch to complete
+    except Exception as e:
+        raise Exception("Failed to launch UR5e with gripper", e)
+
+
+    from arm.ur5e_ros import UR5eRealServer  # Assuming this file defines the UR5eRealServer class
+
     """Starts ur_driver controller"""
     robot_server = UR5eRealServer(
-        robot_ip=ROBOT_IP,
-        gripper_type=GRIPPER_TYPE,
-        ros_pkg_name=ROS_PKG_NAME,
         reset_joint_target=RESET_JOINT_TARGET,
     )
 
-    reconf_client = ReconfClient(
-        "cartesian_motion_controllerdynamic_reconfigure_compliance_param_node"
-    )
+    from gripper.robotiq_gripper_server import RobotiqGripperServer  # For Robotiq Gripper server (conditional)
 
-    if GRIPPER_TYPE == "Robotiq":
-        from robot_servers.robotiq_gripper_server import RobotiqGripperServer
-
-        gripper_server = RobotiqGripperServer(gripper_ip=GRIPPER_IP)
+    gripper_server = RobotiqGripperServer()
         
-    elif GRIPPER_TYPE == "None":
-        pass
-    else:
-        raise NotImplementedError("Gripper Type Not Implemented")
+
+    # Initialize dynamic reconfigure client for the solver parameters
+    solver_client = ReconfClient("/cartesian_compliance_controller/solver", timeout=30)
+    
+    # Initialize dynamic reconfigure client for PD gains
+    pd_gains_client = ReconfClient("/cartesian_compliance_controller/pd_gains", timeout=30)
+
+    # Initialize dynamic reconfigure client for PD gains
+    stiffness_gains_client = ReconfClient("/cartesian_compliance_controller/stiffness", timeout=30)
+    
 
     if __name__ == "__main__":
         app.run(main)
 
 
 
-    # # Route for Starting ur_driver
-    # @webapp.route("/startimp", methods=["POST"])
-    # def start_ur_driver():
-    #     robot_server.clear()
-    #     robot_server.start_ur_driver()
-    #     return "Started ur_driver"
-
-    # # Route for Stopping ur_driver
-    # @webapp.route("/stopimp", methods=["POST"])
-    # def stop_ur_driver():
-    #     robot_server.stop_ur_driver()
-    #     return "Stopped ur_driver"
-
-    # # Route for Getting Pose
-    # @webapp.route("/getpos", methods=["POST"])
-    # def get_pos():
-    #     return jsonify({"pose": np.array(robot_server.pos).tolist()})
-
-    # @webapp.route("/getpos_euler", methods=["POST"])
-    # def get_pos_euler():
-    #     r = R.from_quat(robot_server.pos[3:])
-    #     euler = r.as_euler("xyz")
-    #     return jsonify({"pose": np.concatenate([robot_server.pos[:3], euler]).tolist()})
-
-    # @webapp.route("/getvel", methods=["POST"])
-    # def get_vel():
-    #     return jsonify({"vel": np.array(robot_server.vel).tolist()})
-
-    # @webapp.route("/getforce", methods=["POST"])
-    # def get_force():
-    #     return jsonify({"force": np.array(robot_server.force).tolist()})
-
-    # @webapp.route("/gettorque", methods=["POST"])
-    # def get_torque():
-    #     return jsonify({"torque": np.array(robot_server.torque).tolist()})
-
-    # @webapp.route("/getq", methods=["POST"])
-    # def get_q():
-    #     return jsonify({"q": np.array(robot_server.q).tolist()})
-
-    # @webapp.route("/getdq", methods=["POST"])
-    # def get_dq():
-    #     return jsonify({"dq": np.array(robot_server.dq).tolist()})
-
-    # @webapp.route("/getjacobian", methods=["POST"])
-    # def get_jacobian():
-    #     return jsonify({"jacobian": np.array(robot_server.jacobian).tolist()})
-
-    # # Route for getting gripper distance
-    # @webapp.route("/get_gripper", methods=["POST"])
-    # def get_gripper():
-    #     return jsonify({"gripper": gripper_server.gripper_pos})
-
-    # # Route for Running Joint Reset
-    # @webapp.route("/jointreset", methods=["POST"])
-    # def joint_reset():
-    #     robot_server.clear()
-    #     robot_server.reset_joint()
-    #     return "Reset Joint"
-
-    # # Route for Activating the Gripper
-    # @webapp.route("/activate_gripper", methods=["POST"])
-    # def activate_gripper():
-    #     print("activate gripper")
-    #     gripper_server.activate_gripper()
-    #     return "Activated"
-
-    # # Route for Resetting the Gripper. It will reset and activate the gripper
-    # @webapp.route("/reset_gripper", methods=["POST"])
-    # def reset_gripper():
-    #     print("reset gripper")
-    #     gripper_server.reset_gripper()
-    #     return "Reset"
-
-    # # Route for Opening the Gripper
-    # @webapp.route("/open_gripper", methods=["POST"])
-    # def open():
-    #     print("open")
-    #     gripper_server.open()
-    #     return "Opened"
-
-    # # Route for Closing the Gripper
-    # @webapp.route("/close_gripper", methods=["POST"])
-    # def close():
-    #     print("close")
-    #     gripper_server.close()
-    #     return "Closed"
-
-    # # Route for moving the gripper
-    # @webapp.route("/move_gripper", methods=["POST"])
-    # def move_gripper():
-    #     gripper_pos = request.json
-    #     pos = np.clip(int(gripper_pos["gripper_pos"]), 0, 255)  # 0-255
-    #     print(f"move gripper to {pos}")
-    #     gripper_server.move(pos)
-    #     return "Moved Gripper"
-
-    # # Route for Clearing Errors (Communcation constraints, etc.)
-    # @webapp.route("/clearerr", methods=["POST"])
-    # def clear():
-    #     robot_server.clear()
-    #     return "Clear"
-
-    # # Route for Sending a pose command
-    # @webapp.route("/pose", methods=["POST"])
-    # def pose():
-    #     pos = np.array(request.json["arr"])
-    #     print("Moving to", pos)
-    #     robot_server.move(pos)
-    #     return "Moved"
-
-    # # Route for getting all state information
-    # @webapp.route("/getstate", methods=["POST"])
-    # def get_state():
-    #     return jsonify(
-    #         {
-    #             "pose": np.array(robot_server.pos).tolist(),
-    #             "vel": np.array(robot_server.vel).tolist(),
-    #             "force": np.array(robot_server.force).tolist(),
-    #             "torque": np.array(robot_server.torque).tolist(),
-    #             "q": np.array(robot_server.q).tolist(),
-    #             "dq": np.array(robot_server.dq).tolist(),
-    #             "jacobian": np.array(robot_server.jacobian).tolist(),
-    #             "gripper_pos": gripper_server.gripper_pos,
-    #         }
-    #     )
-
-    # # Route for updating compliance parameters
-    # @webapp.route("/update_param", methods=["POST"])
-    # def update_param():
-    #     reconf_client.update_configuration(request.json)
-    #     return "Updated compliance parameters"
-
-    # webapp.run(host="0.0.0.0")
 
 
+    # Route for Getting End Effector Pose
+    @webapp.route("/getposefull", methods=["POST"])
+    def get_eef_pose():
+        # Get the end-effector pose
+        pos, quat, rot_mat, euler_ori = robot_server.get_ee_pose()
+
+        # Return the pose data as a JSON response
+        return jsonify({
+            "position": pos.tolist(),
+            "quaternion": quat.tolist(),
+            "rotation_matrix": rot_mat.tolist(),
+            "euler_angles": euler_ori.tolist()
+        })
+    
+    # Route for Getting End Effector Pose (Position and Orientation)
+    @webapp.route("/getpose", methods=["POST"])
+    def get_pos():
+        # Get the end-effector pose
+        pos, quat, _, _ = robot_server.get_ee_pose()
+        # Return the combined pose (position + orientation) as a JSON response
+        return jsonify({"pose":  np.concatenate([pos, quat]).tolist()})
+
+
+    @webapp.route("/geteefvel", methods=["POST"])
+    def get_vel():
+        # Get the end-effector velocity
+        translational_vel, rotational_vel = robot_server.get_ee_vel()
+        # Return the combined velocity as a JSON response
+        return jsonify({"velocity": np.concatenate([translational_vel, rotational_vel]).tolist()})
+
+
+    @webapp.route("/getforce", methods=["POST"])
+    def get_force_torque():
+        # Return the combined force and torque as a JSON response
+        return jsonify({"force_torque": robot_server.get_force_torque()})
+
+    @webapp.route("/getq", methods=["POST"])
+    def get_q():
+        return jsonify({"q": robot_server.get_jpos()})
+
+    @webapp.route("/getdq", methods=["POST"])
+    def get_dq():
+        return jsonify({"q": robot_server.get_jvel()})
+
+    @webapp.route("/getjacobian", methods=["POST"])
+    def get_jacobian():
+        return jsonify({"jacobian": np.array(robot_server.jacobian).tolist()})
+    
+    # Route for getting all state information
+    @webapp.route("/getstate", methods=["POST"])
+    def get_state():
+        # Get the end-effector pose
+        pos, quat, _, _ = robot_server.get_ee_pose()
+        pose = np.concatenate([pos, quat]).tolist()
+        # Get the end-effector velocity
+        translational_vel, rotational_vel = robot_server.get_ee_vel()
+
+        # Return the combined pose (position + orientation) as a JSON response
+        return jsonify(
+            {
+                "pose": pose,
+                "vel": np.concatenate([translational_vel, rotational_vel]).tolist(),
+                "wrench": robot_server.get_wrench(),
+                "q": robot_server.get_jpos(),
+                "dq": robot_server.get_jvel(),
+                "jacobian": robot_server.get_jacobian().tolist(),
+                "gripper_pos": gripper_server.gripper_pos,
+            }
+        )
+
+    # Route for Sending a pose command
+    @webapp.route("/pose", methods=["POST"])
+    def pose():
+        pos = np.array(request.json["arr"])
+        print("Moving to", pos)
+        robot_server.set_ee_pose(pos)
+        return "Moved"
+    
+    # Route for Sending a pose command
+    @webapp.route("/pose", methods=["POST"])
+    def pose():
+        delta_pos = np.array(request.json["arr"])
+        print("Moving by", delta_pos)
+        robot_server.move_ee_xyz(delta_pos)
+        return "Moved"
+    
+    # Route for updating compliance parameters
+    @webapp.route("/update_solver_param", methods=["POST"])
+    def update_solver_param():
+        solver_client.update_configuration(request.json)
+        return "Updated compliance parameters"
+    
+    # Route for updating compliance parameters
+    @webapp.route("/update_pd_gains_param", methods=["POST"])
+    def update_pd_gains_param():
+        pd_gains_client.update_configuration(request.json)
+        return "Updated compliance parameters"
+    
+    # Route for updating compliance parameters
+    @webapp.route("/update_stiffness_gains_param", methods=["POST"])
+    def update_stiffness_gains_param():
+        stiffness_gains_client.update_configuration(request.json)
+        return "Updated compliance parameters"
+
+    # Route for Running Joint Reset
+    @webapp.route("/jointreset", methods=["POST"])
+    def joint_reset():
+        robot_server.reset_joint( use_urscript=False)
+        return "Reset Joint"
+    
+
+    # Route for getting gripper distance
+    @webapp.route("/get_gripper", methods=["POST"])
+    def get_gripper():
+        return jsonify({"gripper": gripper_server.gripper_pos})
+
+    # Route for Activating the Gripper
+    @webapp.route("/activate_gripper", methods=["POST"])
+    def activate_gripper():
+        print("activate gripper")
+        gripper_server.activate_gripper()
+        return "Activated"
+
+    # Route for Resetting the Gripper. It will reset and activate the gripper
+    @webapp.route("/reset_gripper", methods=["POST"])
+    def reset_gripper():
+        print("reset gripper")
+        gripper_server.reset_gripper()
+        return "Reset"
+
+    # Route for Opening the Gripper
+    @webapp.route("/open_gripper", methods=["POST"])
+    def open():
+        print("open")
+        gripper_server.open()
+        return "Opened"
+
+    # Route for Closing the Gripper
+    @webapp.route("/close_gripper", methods=["POST"])
+    def close():
+        print("close")
+        gripper_server.close()
+        return "Closed"
+
+    # Route for moving the gripper
+    @webapp.route("/move_gripper", methods=["POST"])
+    def move_gripper():
+        gripper_pos = request.json
+        pos = np.clip(int(gripper_pos["gripper_pos"]), 0, 255)  # 0-255
+        print(f"move gripper to {pos}")
+        gripper_server.move(pos)
+        return "Moved Gripper"
+
+    webapp.run(host="0.0.0.0")

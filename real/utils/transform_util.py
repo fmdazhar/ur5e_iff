@@ -6,7 +6,7 @@ import numpy as np
 from scipy.spatial.transform import Rotation as R
 from scipy.spatial.transform import Slerp
 
-from airobot.utils import common
+from utils import common
 
 
 class Position:

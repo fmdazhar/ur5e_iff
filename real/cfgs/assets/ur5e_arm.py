@@ -10,6 +10,7 @@ _C = CN()
 _C.CLASS = 'UR5e'
 _C.MOVEGROUP_NAME = 'manipulator'
 _C.ROSTOPIC_JOINT_STATES = '/joint_states'
+_C.ROSTOPIC_WRENCH = '/cartesian_compliance_controller/ft_sensor_wrench'
 
 
 # https://www.universal-robots.com/how-tos-and-faqs/faq/ur-faq/max-joint-torques-17260/
@@ -27,7 +28,7 @@ _C.ROBOT_JOINT_TRAJECTORY_CONTROLLER = 'pos_joint_traj_controller'
 _C.ROBOT_JOINT_COMMAND_TOPIC = '/pos_joint_traj_controller/command'
 # end-effector frame of the arm
 _C.ROBOT_EE_FRAME = 'tool0'
-_C.ROBOT_CARTESIAN_MOTION_CONTROLLER = 'cartesian_motion_controller'
+_C.ROBOT_CARTESIAN_MOTION_CONTROLLER = 'cartesian_compliance_controller'
 _C.ROBOT_EE_POSE_COMMAND_TOPIC = '/target_frame'
 
 _C.JOINT_SPEED_TOPIC = '/joint_speed'
@@ -36,7 +37,8 @@ _C.URSCRIPT_TOPIC = '/ur_driver/URScript'
 _C.IK_POSITION_TOLERANCE = 0.01
 # inverse kinematics orientation tolerance (rad)
 _C.IK_ORIENTATION_TOLERANCE = 0.05
-_C.HOME_POSITION = [0, -1.66, -1.92, -1.12, 1.57, 0]
+_C.RESET_POSITION = [0, -1.66, -1.92, -1.12, 1.57, 0]
+_C.HOME_POSE = [0, 0, 0, 0, 0, 0, 0]
 _C.MAX_JOINT_ERROR = 0.01
 _C.MAX_JOINT_VEL_ERROR = 0.05
 _C.MAX_EE_POS_ERROR = 0.01
@@ -44,6 +46,19 @@ _C.MAX_EE_POS_ERROR = 0.01
 # greater than 1-error
 _C.MAX_EE_ORI_ERROR = 0.02
 _C.TIMEOUT_LIMIT = 10
+
+_C.RANDOM_XY_RANGE = 0.05  # Max random XY range during reset
+_C.RANDOM_RZ_RANGE = 0.05  # Max random orientation reset range
+
+_C.xyz_bounding_box.low = [-1.0, -1.0, 0.0]  # Min x, y, z coordinates
+_C.xyz_bounding_box.high = [1.0, 1.0, 1.5]   # Max x, y, z coordinates
+_C.rpy_bounding_box.low = [-3.14, -3.14, -3.14]  # Min roll, pitch, yaw
+_C.rpy_bounding_box.high = [3.14, 3.14, 3.14]    # Max roll, pitch, yaw
+
+_C.CONTROL_FREQUENCY = 10  # Used for interpolating between positions
+
+
+
 
 
 def get_ur5e_arm_cfg():
