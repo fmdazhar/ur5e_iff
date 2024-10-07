@@ -10,6 +10,7 @@ import time
 import subprocess
 from scipy.spatial.transform import Rotation as R
 from absl import app, flags
+from cfgs.ur5e_hande_cfg import get_cfg
 
 import geometry_msgs.msg as geom_msg
 from dynamic_reconfigure.client import Client as ReconfClient
@@ -26,7 +27,7 @@ flags.DEFINE_list(
 def main(_):
     ROS_PKG_NAME = "noetic_fake"
     RESET_JOINT_TARGET = FLAGS.reset_joint_target
-    GRIPPER_TYPE = "Robotiq"
+    cfgs  = get_cfg()
 
     webapp = Flask(__name__)
 
@@ -44,7 +45,7 @@ def main(_):
     launch_command = [
             "roslaunch",
             ROS_PKG_NAME,
-            "c_bot_bringup.launch",
+            "c_bot_fake.launch",
         ]
     
     try:
@@ -58,6 +59,7 @@ def main(_):
 
     """Starts ur_driver controller"""
     robot_server = UR5eRealServer(
+        cfgs=cfgs,
         reset_joint_target=RESET_JOINT_TARGET,
     )
 
@@ -65,7 +67,6 @@ def main(_):
 
     gripper_server = RobotiqGripperServer()
         
-
     # Initialize dynamic reconfigure client for the solver parameters
     solver_client = ReconfClient("/cartesian_compliance_controller/solver", timeout=30)
     
@@ -75,13 +76,6 @@ def main(_):
     # Initialize dynamic reconfigure client for PD gains
     stiffness_gains_client = ReconfClient("/cartesian_compliance_controller/stiffness", timeout=30)
     
-
-    if __name__ == "__main__":
-        app.run(main)
-
-
-
-
 
     # Route for Getting End Effector Pose
     @webapp.route("/getposefull", methods=["POST"])
@@ -162,7 +156,7 @@ def main(_):
         return "Moved"
     
     # Route for Sending a pose command
-    @webapp.route("/pose", methods=["POST"])
+    @webapp.route("/pose_delta", methods=["POST"])
     def pose():
         delta_pos = np.array(request.json["arr"])
         print("Moving by", delta_pos)
@@ -235,5 +229,18 @@ def main(_):
         print(f"move gripper to {pos}")
         gripper_server.move(pos)
         return "Moved Gripper"
+    
+    @app.route('/shutdown', methods=['POST'])
+    def shutdown():
+        shutdown_func = request.environ.get('werkzeug.server.shutdown')
+        if shutdown_func is None:
+            raise RuntimeError('Not running the Werkzeug Server')
+        shutdown_func()
+        return 'Server shutting down...'
 
     webapp.run(host="0.0.0.0")
+
+if __name__ == "__main__":
+    app.run(main)
+
+

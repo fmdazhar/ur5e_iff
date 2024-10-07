@@ -39,5 +39,5 @@ _C.MIMIC_COEFF = [1, -1, 1, -1, -1, 1]
 _C.MAX_TORQUE = 25.0
 
 
-def get_robotiq2f140_cfg():
+def get_robotiq_hande_cfg():
     return _C.clone()

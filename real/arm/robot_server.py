@@ -17,6 +17,7 @@ import copy
 from utils.ros_util import joints_to_kdl
 from utils.ros_util import kdl_array_to_numpy
 from utils.ros_util import kdl_frame_to_numpy
+from utils.ai_logger import Logger
 
 
 class RobotServer:
@@ -29,7 +30,7 @@ class RobotServer:
         """
         Initialize constants.
         """
-        self._home_position = self.cfgs.ARM.HOME_POSITION
+        self._home_pose = self.cfgs.ARM.HOME_POSE
         self._reset_position = self.cfgs.ARM.RESET_POSITION
         robot_description = self.cfgs.ROBOT_DESCRIPTION
         urdf_string = rospy.get_param(robot_description)

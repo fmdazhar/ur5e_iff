@@ -2,8 +2,8 @@ import time
 
 import numpy as np
 
-import real as ar
-import real.utils.common as arutil
+from utils.ai_logger import Logger
+import utils.common as arutil
 
 
 def wait_to_reach_jnt_goal(goal, get_func, joint_name=None,
@@ -44,7 +44,7 @@ def wait_to_reach_jnt_goal(goal, get_func, joint_name=None,
                 pt_str = 'Unable to move to joint goals (%s)' \
                          ' within %f s' % (str(goal),
                                            timeout)
-                ar.log_error(pt_str)
+                Logger.log_error(pt_str)
                 return success
             if reach_jnt_goal(goal, get_func, joint_name, max_error):
                 success = True
@@ -63,7 +63,7 @@ def wait_to_reach_jnt_goal(goal, get_func, joint_name=None,
                     vel_stop_time = None
                 if vel_stop_time is not None and time.time() - vel_stop_time > 0.1:
                     pt_str = 'Unable to move to joint goals (%s)' % str(goal)
-                    ar.log_error(pt_str)
+                    Logger.log_error(pt_str)
                     return success
             time.sleep(0.001)
         except KeyboardInterrupt:

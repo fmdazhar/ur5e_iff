@@ -12,7 +12,7 @@ class Logger:
             `debug`, `info`, `warn`, `error`, `critical`.
     """
 
-    def __init__(self, log_level):
+    def __init__(self, log_level='debug'):
         formatter = colorlog.ColoredFormatter(
             "%(log_color)s[%(levelname)s]%(reset)s[%(asctime)s]: "
             "%(message_log_color)s%(message)s",
@@ -42,9 +42,9 @@ class Logger:
 
         self.logger = colorlog.getLogger('AIRobot')
         self.logger.addHandler(handler)
-        self.set_level(log_level)
+        self.set_log_level(log_level)
 
-    def debug(self, msg):
+    def log_debug(self, msg):
         """
         Logging debug information
 
@@ -53,7 +53,7 @@ class Logger:
         """
         self.logger.debug(msg)
 
-    def info(self, msg):
+    def log_info(self, msg):
         """
         Logging info information
 
@@ -62,7 +62,7 @@ class Logger:
         """
         self.logger.info(msg)
 
-    def warning(self, msg):
+    def log_warning(self, msg):
         """
         Logging warning information
 
@@ -71,7 +71,7 @@ class Logger:
         """
         self.logger.warning(msg)
 
-    def error(self, msg):
+    def log_error(self, msg):
         """
         Logging error information
 
@@ -80,7 +80,7 @@ class Logger:
         """
         self.logger.error(msg)
 
-    def critical(self, msg):
+    def log_critical(self, msg):
         """
         Logging critical information
 
@@ -89,7 +89,7 @@ class Logger:
         """
         self.logger.critical(msg)
 
-    def set_level(self, log_level):
+    def set_log_level(self, log_level):
         """
         Set logging level
 
@@ -116,8 +116,8 @@ class Logger:
 
 if __name__ == '__main__':
     ai_logger = Logger('debug')
-    ai_logger.debug("A quirky message only developers care about")
-    ai_logger.info("Curious users might want to know this")
-    ai_logger.warning("Something is wrong and any user should be informed")
-    ai_logger.error("Serious stuff, this is red for a reason")
-    ai_logger.critical("OH NO everything is on fire")
+    ai_logger.log_debug("A quirky message only developers care about")
+    ai_logger.log_info("Curious users might want to know this")
+    ai_logger.log_warning("Something is wrong and any user should be informed")
+    ai_logger.log_error("Serious stuff, this is red for a reason")
+    ai_logger.log_critical("OH NO everything is on fire")

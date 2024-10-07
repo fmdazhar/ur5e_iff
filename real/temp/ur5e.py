@@ -141,7 +141,7 @@ class UR5eReal:
         jposs = self.get_jpos()
         for i, jpos in enumerate(jposs):
             if jpos <= -np.pi or jpos > np.pi:
-                ar.log_warn('Current joint angles are: %s\n'
+                Logger.log_warn('Current joint angles are: %s\n'
                             'Some joint angles are outside of the valid'
                             ' range (-pi, pi]\n Please use the Teaching'
                             ' Pendant to move the correponding joints so'

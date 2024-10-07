@@ -50,10 +50,10 @@ _C.TIMEOUT_LIMIT = 10
 _C.RANDOM_XY_RANGE = 0.05  # Max random XY range during reset
 _C.RANDOM_RZ_RANGE = 0.05  # Max random orientation reset range
 
-_C.xyz_bounding_box.low = [-1.0, -1.0, 0.0]  # Min x, y, z coordinates
-_C.xyz_bounding_box.high = [1.0, 1.0, 1.5]   # Max x, y, z coordinates
-_C.rpy_bounding_box.low = [-3.14, -3.14, -3.14]  # Min roll, pitch, yaw
-_C.rpy_bounding_box.high = [3.14, 3.14, 3.14]    # Max roll, pitch, yaw
+_C.xyz_bounding_box_low = [-1.0, -1.0, 0.0]  # Min x, y, z coordinates
+_C.xyz_bounding_box_high = [1.0, 1.0, 1.5]   # Max x, y, z coordinates
+_C.rpy_bounding_box_low = [-3.14, -3.14, -3.14]  # Min roll, pitch, yaw
+_C.rpy_bounding_box_high = [3.14, 3.14, 3.14]    # Max roll, pitch, yaw
 
 _C.CONTROL_FREQUENCY = 10  # Used for interpolating between positions
 

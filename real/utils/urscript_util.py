@@ -9,7 +9,7 @@ built off of urscript.py, part of python-urx library
 (https://github.com/SintefManufacturing/python-urx)
 """
 
-import ur5e_iff_real as ar
+from .utils.ai_logger import Logger
 
 
 class URScript(object):
@@ -32,7 +32,7 @@ class URScript(object):
         upon call
         """
         if self._program == "":
-            ar.log_debug("urscript program is empty")
+            Logger.log_debug("urscript program is empty")
             return ""
 
         # Construct the program

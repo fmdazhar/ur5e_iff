@@ -1,8 +1,6 @@
-from airobot.cfgs.assets.default_configs import get_cfg_defaults
-from airobot.cfgs.assets.pybullet_camera import get_sim_cam_cfg
-from airobot.cfgs.assets.realsense_camera import get_realsense_cam_cfg
-from airobot.cfgs.assets.robotiq2f140 import get_robotiq2f140_cfg
-from airobot.cfgs.assets.ur5e_arm import get_ur5e_arm_cfg
+from cfgs.assets.default_configs import get_cfg_defaults
+from cfgs.assets.robotiq_hande import get_robotiq_hande_cfg
+from cfgs.assets.ur5e_arm import get_ur5e_arm_cfg
 
 _C = get_cfg_defaults()
 # whether the robot has an arm or not
@@ -16,12 +14,7 @@ _C.ROBOT_DESCRIPTION = '/robot_description'
 
 _C.ARM = get_ur5e_arm_cfg()
 
-_C.CAM.SIM = get_sim_cam_cfg()
-_C.CAM.REAL = get_realsense_cam_cfg()
-_C.CAM.CLASS = 'RGBDCamera'
-
-_C.EETOOL = get_robotiq2f140_cfg()
-_C.EETOOL.CLASS = 'Robotiq2F140'
+_C.EETOOL = get_robotiq_hande_cfg()
 
 
 def get_cfg():

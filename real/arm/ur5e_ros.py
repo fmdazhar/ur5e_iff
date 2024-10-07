@@ -10,7 +10,6 @@ import threading
 import numpy as np
 import rospy
 import tf
-import ur5e_iff_real as ar
 
 from arm.robot_server import RobotServer
 from std_msgs.msg import String
@@ -44,9 +43,9 @@ class UR5eRealServer(RobotServer):
         self.is_jpos_in_good_range()
         self.controller_util = ControllerUtil()  # Instantiate ControllerUtil here
 
-        # Use passed reset joint target if provided, else default to config
-        self.reset_joint_target = reset_joint_target if reset_joint_target else self.cfgs.ARM.RESET_POSITION
-
+        # Overwrite _reset_position if reset_joint_target is provided
+        if reset_joint_target is not None:
+            self._reset_position = reset_joint_target
         # Wait until controller spawner is done
         time.sleep(1)
 
@@ -61,7 +60,7 @@ class UR5eRealServer(RobotServer):
         max_vels = []
         max_accs = []
         for arm_jnt in self.arm_jnt_names:
-            jnt_param = self.cfgs.ROBOT_DESC + \
+            jnt_param = self.cfgs.ROBOT_DESCRIPTION + \
                         '_planning/joint_limits/' + arm_jnt
             jnt_params.append(copy.deepcopy(jnt_param))
             max_vels.append(rospy.get_param(jnt_param + '/max_velocity'))
@@ -90,12 +89,12 @@ class UR5eRealServer(RobotServer):
         """
         # for publishing end effector pose to real robot
         self._ee_pose_pub = rospy.Publisher(
-            self.cfgs.ARM.END_EFFECTOR_POSE_TOPIC,
+            self.cfgs.ARM.ROBOT_EE_POSE_COMMAND_TOPIC,
             PoseStamped,
             queue_size=3
         )
         self._joint_pos_pub = rospy.Publisher(
-            self.cfgs.ROBOT_JOINT_COMMAND_TOPIC,
+            self.cfgs.ARM.ROBOT_JOINT_COMMAND_TOPIC,
             JointTrajectory,
             queue_size=10
         )
@@ -153,7 +152,7 @@ class UR5eRealServer(RobotServer):
         jposs = self.get_jpos()
         for i, jpos in enumerate(jposs):
             if jpos <= -np.pi or jpos > np.pi:
-                ar.log_warn('Current joint angles are: %s\n'
+                Logger.warning('Current joint angles are: %s\n'
                             'Some joint angles are outside of the valid'
                             ' range (-pi, pi]\n Please use the Teaching'
                             ' Pendant to move the correponding joints so'
@@ -375,7 +374,7 @@ class UR5eRealServer(RobotServer):
         """Resets Joints (needed after running for hours)"""
 
         if position is None:
-            position = self.reset_joint_target
+            position = self._reset_position
 
         success = False
         if use_urscript:
@@ -423,7 +422,7 @@ class UR5eRealServer(RobotServer):
         # else:
         #     print(f"[ERROR] Controller '{controller_name}' is not active. Cannot move to home position.")
         if pose is None:
-            pose = self.cfgs.ARM.HOME_POSE
+            pose = self._home_pose
         success = False
         pos = pose[:3]
         ori = pose[3:]
@@ -456,8 +455,10 @@ class UR5eRealServer(RobotServer):
         if not success:
                 print('Robot go_home failed!!!')
 
-    def set_ee_pose(self, pos=None, ori=None, wait=True, clip = False, interpolate = False, hz = 10 , timeout = self.cfgs.ARM.TIMEOUT_LIMIT,
-                pos_tol = self.cfgs.ARM.MAX_EE_POS_ERROR, ori_tol = self.cfgs.ARM.MAX_EE_ORI_ERROR, *args, **kwargs):
+    def set_ee_pose(self, pos=None, ori=None, wait=True, clip=False, interpolate=False, 
+                timeout=None,
+                pos_tol=None,
+                ori_tol=None, *args, **kwargs):
         """
         Set cartesian space pose of end effector.
 
@@ -480,6 +481,15 @@ class UR5eRealServer(RobotServer):
         Returns:
             bool: Returns True is robot successfully moves to goal pose.
         """
+
+        # Assign default values if None
+        if timeout is None:
+            timeout = self.cfgs.ARM.TIMEOUT_LIMIT
+        if pos_tol is None:
+            pos_tol = self.cfgs.ARM.MAX_EE_POS_ERROR
+        if ori_tol is None:
+            ori_tol = self.cfgs.ARM.MAX_EE_ORI_ERROR
+
         if ori is None and pos is None:
             return True
 
@@ -494,12 +504,12 @@ class UR5eRealServer(RobotServer):
                 euler[0] = sign * (
                     np.clip(
                         np.abs(euler[0]),
-                        self.cfgs.ARM.rpy_bounding_box.low[0],
-                        self.cfgs.ARM.rpy_bounding_box.high[0],
+                        self.cfgs.ARM.rpy_bounding_box_low[0],
+                        self.cfgs.ARM.rpy_bounding_box_high[0],
                     )
                 )
                 euler[1:] = np.clip(
-                    euler[1:], self.cfgs.ARM.rpy_bounding_box.low[1:], self.cfgs.ARM.rpy_bounding_box.high[1:]
+                    euler[1:], self.cfgs.ARM.rpy_bounding_box_low[1:], self.cfgs.ARM.rpy_bounding_box_high[1:]
                 )
                 quat = arutil.to_quat(euler)
         else:
@@ -510,7 +520,7 @@ class UR5eRealServer(RobotServer):
             pos = pose[0]
         elif clip:
             pos = np.clip(
-            pos, self.cfgs.ARM.xyz_bounding_box.low, self.cfgs.ARM.xyz_bounding_box.high
+            pos, self.cfgs.ARM.xyz_bounding_box_low, self.cfgs.ARM.xyz_bounding_box_high
         )
             
         if interpolate:
@@ -524,7 +534,7 @@ class UR5eRealServer(RobotServer):
             for p in path:
                 # Create a PoseStamped message for each step
                 self._publish_pose(p, quat)
-                time.sleep(1 / hz)
+                time.sleep(1 / self.cfgs.ARM.CONTROL_FREQUENCY)
             
         else:
             # Direct movement to the target position without interpolation
