@@ -1,18 +1,17 @@
 import logging
-
 import colorlog
 
 
 class Logger:
     """
-    A logger class.
+    A static logger class.
 
-    Args:
-        log_level (str): the following modes are supported:
-            `debug`, `info`, `warn`, `error`, `critical`.
+    Supported log levels: `debug`, `info`, `warn`, `error`, `critical`.
     """
 
-    def __init__(self, log_level='debug'):
+    # Static method to initialize the logger configuration
+    @staticmethod
+    def _initialize_logger():
         formatter = colorlog.ColoredFormatter(
             "%(log_color)s[%(levelname)s]%(reset)s[%(asctime)s]: "
             "%(message_log_color)s%(message)s",
@@ -40,84 +39,93 @@ class Logger:
         handler = colorlog.StreamHandler()
         handler.setFormatter(formatter)
 
-        self.logger = colorlog.getLogger('AIRobot')
-        self.logger.addHandler(handler)
-        self.set_log_level(log_level)
+        logger = colorlog.getLogger('AIRobot')
+        logger.addHandler(handler)
 
-    def log_debug(self, msg):
+        # Set default log level to DEBUG
+        logger.setLevel(logging.DEBUG)
+
+        return logger
+
+    # Static logger object
+    _logger = _initialize_logger.__func__()
+
+    @staticmethod
+    def log_debug(msg):
         """
-        Logging debug information
+        Logging debug information.
 
         Args:
             msg (str): message to log
         """
-        self.logger.debug(msg)
+        Logger._logger.debug(msg)
 
-    def log_info(self, msg):
+    @staticmethod
+    def log_info(msg):
         """
-        Logging info information
+        Logging info information.
 
         Args:
             msg (str): message to log
         """
-        self.logger.info(msg)
+        Logger._logger.info(msg)
 
-    def log_warning(self, msg):
+    @staticmethod
+    def log_warning(msg):
         """
-        Logging warning information
+        Logging warning information.
 
         Args:
             msg (str): message to log
         """
-        self.logger.warning(msg)
+        Logger._logger.warning(msg)
 
-    def log_error(self, msg):
+    @staticmethod
+    def log_error(msg):
         """
-        Logging error information
+        Logging error information.
 
         Args:
             msg (str): message to log
         """
-        self.logger.error(msg)
+        Logger._logger.error(msg)
 
-    def log_critical(self, msg):
+    @staticmethod
+    def log_critical(msg):
         """
-        Logging critical information
+        Logging critical information.
 
         Args:
             msg (str): message to log
         """
-        self.logger.critical(msg)
+        Logger._logger.critical(msg)
 
-    def set_log_level(self, log_level):
+    @staticmethod
+    def set_log_level(log_level):
         """
-        Set logging level
+        Set logging level.
 
         Args:
-            log_level (str): the following modes are supported:
-                `debug`, `info`, `warn`, `error`, `critical`
-
+            log_level (str): supported modes are `debug`, `info`, `warn`, `error`, `critical`
         """
-        if 'debug' in log_level:
-            self.log_level = logging.DEBUG
-        elif 'info' in log_level:
-            self.log_level = logging.INFO
-        elif 'warn' in log_level:
-            self.log_level = logging.WARNING
-        elif 'error' in log_level:
-            self.log_level = logging.ERROR
-        elif 'critical' in log_level:
-            self.log_level = logging.CRITICAL
+        if log_level == 'debug':
+            Logger._logger.setLevel(logging.DEBUG)
+        elif log_level == 'info':
+            Logger._logger.setLevel(logging.INFO)
+        elif log_level == 'warn':
+            Logger._logger.setLevel(logging.WARNING)
+        elif log_level == 'error':
+            Logger._logger.setLevel(logging.ERROR)
+        elif log_level == 'critical':
+            Logger._logger.setLevel(logging.CRITICAL)
         else:
-            raise ValueError('Unknown logging '
-                             'level: %s' % log_level)
-        self.logger.setLevel(self.log_level)
+            raise ValueError(f"Unknown logging level: {log_level}")
 
 
+# Test the static logger
 if __name__ == '__main__':
-    ai_logger = Logger('debug')
-    ai_logger.log_debug("A quirky message only developers care about")
-    ai_logger.log_info("Curious users might want to know this")
-    ai_logger.log_warning("Something is wrong and any user should be informed")
-    ai_logger.log_error("Serious stuff, this is red for a reason")
-    ai_logger.log_critical("OH NO everything is on fire")
+    Logger.log_debug("A quirky message only developers care about")
+    Logger.log_info("Curious users might want to know this")
+    Logger.log_warning("Something is wrong and any user should be informed")
+    Logger.log_error("Serious stuff, this is red for a reason")
+    Logger.log_critical("OH NO everything is on fire")

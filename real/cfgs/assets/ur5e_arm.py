@@ -27,7 +27,7 @@ _C.ROBOT_JOINT_TRAJECTORY_CONTROLLER = 'pos_joint_traj_controller'
 # joint command topic
 _C.ROBOT_JOINT_COMMAND_TOPIC = '/pos_joint_traj_controller/command'
 # end-effector frame of the arm
-_C.ROBOT_EE_FRAME = 'tool0'
+_C.ROBOT_EE_FRAME = 'tcp_link'
 _C.ROBOT_CARTESIAN_MOTION_CONTROLLER = 'cartesian_compliance_controller'
 _C.ROBOT_EE_POSE_COMMAND_TOPIC = '/target_frame'
 
@@ -41,10 +41,10 @@ _C.RESET_POSITION = [0, -1.66, -1.92, -1.12, 1.57, 0]
 _C.HOME_POSE = [0, 0, 0, 0, 0, 0, 0]
 _C.MAX_JOINT_ERROR = 0.01
 _C.MAX_JOINT_VEL_ERROR = 0.05
-_C.MAX_EE_POS_ERROR = 0.01
+_C.MAX_EE_POS_ERROR = 0.001
 # real part of the quaternion difference should be
 # greater than 1-error
-_C.MAX_EE_ORI_ERROR = 0.02
+_C.MAX_EE_ORI_ERROR = 0.002
 _C.TIMEOUT_LIMIT = 10
 
 _C.RANDOM_XY_RANGE = 0.05  # Max random XY range during reset

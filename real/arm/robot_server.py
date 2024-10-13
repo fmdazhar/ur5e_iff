@@ -129,26 +129,21 @@ class RobotServer:
         ori_y = ee_quat[1]
         ori_z = ee_quat[2]
         ori_w = ee_quat[3]
+
         if qinit is None:
-            qinit = self.get_jpos().tolist()
-        elif isinstance(qinit, np.ndarray):
-            qinit = qinit.flatten().tolist()
+            qinit = self.get_jpos()
+        if isinstance(qinit, list):
+            qinit = np.array(qinit)
+        qinit = qinit.flatten()
+
         pos_tol = self.cfgs.ARM.IK_POSITION_TOLERANCE
         ori_tol = self.cfgs.ARM.IK_ORIENTATION_TOLERANCE
-        jnt_poss = self._num_ik_solver.get_ik(qinit,
-                                              pos[0],
-                                              pos[1],
-                                              pos[2],
-                                              ori_x,
-                                              ori_y,
-                                              ori_z,
-                                              ori_w,
-                                              pos_tol,
-                                              pos_tol,
-                                              pos_tol,
-                                              ori_tol,
-                                              ori_tol,
-                                              ori_tol)
+        jnt_poss = self._num_ik_solver._ik_solver.CartToJnt(qinit,
+                                        pos[0], pos[1], pos[2],
+                                        ori_x, ori_y, ori_z, ori_w,
+                                        pos_tol, pos_tol, pos_tol,
+                                        ori_tol, ori_tol, ori_tol)
+
         if jnt_poss is None:
             return None
         return list(jnt_poss)

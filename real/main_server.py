@@ -146,12 +146,14 @@ def main(_):
 
         @webapp.route("/getjacobian", methods=["POST"])
         def get_jacobian():
-            return jsonify({"jacobian": np.array(robot_server.get_jacobian()).tolist()})
+            jpos = robot_server.get_jpos()
+            return jsonify({"jacobian": np.array(robot_server.get_jacobian(jpos)).tolist()})
         
         # Route for getting all state information
         @webapp.route("/getstate", methods=["POST"])
         def get_state():
             # Get the end-effector pose
+            jpos = robot_server.get_jpos()
             pos, quat, _, _ = robot_server.get_ee_pose()
             pose = np.concatenate([pos, quat]).tolist()
             # Get the end-effector velocity
@@ -165,7 +167,7 @@ def main(_):
                     "wrench": robot_server.get_wrench(),
                     "q": robot_server.get_jpos(),
                     "dq": robot_server.get_jvel(),
-                    "jacobian": robot_server.get_jacobian().tolist(),
+                    "jacobian": robot_server.get_jacobian(jpos).tolist(),
                     "gripper_pos": gripper_server.gripper_pos,
                 }
             )

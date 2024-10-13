@@ -153,7 +153,7 @@ class UR5eRealServer(RobotServer):
         jposs = self.get_jpos()
         for i, jpos in enumerate(jposs):
             if jpos <= -np.pi or jpos > np.pi:
-                Logger.warning('Current joint angles are: %s\n'
+                Logger.log_warning('Current joint angles are: %s\n'
                             'Some joint angles are outside of the valid'
                             ' range (-pi, pi]\n Please use the Teaching'
                             ' Pendant to move the correponding joints so'
@@ -447,7 +447,7 @@ class UR5eRealServer(RobotServer):
             euler_random[-1] += np.random.uniform(
                 -self.cfgs.ARM.random_rz_range, self.cfgs.ARM.random_rz_range
             )
-            reset_ori[3:] = arutil.euler_2_quat(euler_random)
+            reset_ori[3:] = arutil.euler2quat(euler_random)
 
 
         # Direct movement to the target position without interpolation
@@ -495,6 +495,7 @@ class UR5eRealServer(RobotServer):
             return True
 
         success = False
+
         if ori is None:
             pose = self.get_ee_pose()  # last index is euler angles
             quat = pose[1]
@@ -527,7 +528,7 @@ class UR5eRealServer(RobotServer):
         if interpolate:
             # Interpolate over a specified timeout
             steps = int(timeout * self.cfgs.ARM.CONTROL_FREQUENCY)
-            ee_pos = self.get_ee_pose()
+            ee_pos = self.get_ee_pose()[0]  # Extract only the position component
 
             # Create a linear path for positions
             path = np.linspace(ee_pos, pos, steps)
@@ -590,7 +591,7 @@ class UR5eRealServer(RobotServer):
                                           self.cfgs.ARM.ROBOT_EE_FRAME)
         return ee_vel[:3], ee_vel[3:]
     
-    def move_ee_xyz(self, delta_xyz, wait=True,
+    def move_ee_xyz(self, delta_xyz, wait=True, interpolate = False,
                     *args, **kwargs):
         """
         Move end effector in straight line while maintaining orientation.
@@ -612,6 +613,97 @@ class UR5eRealServer(RobotServer):
         ee_pos[0] += delta_xyz[0]
         ee_pos[1] += delta_xyz[1]
         ee_pos[2] += delta_xyz[2]
-        success = self.set_ee_pose(ee_pos, ee_euler, wait=wait)
+        success = self.set_ee_pose(ee_pos, ee_euler, wait=wait, interpolate=interpolate)
         return success
 
+if __name__ == "__main__":
+
+    from cfgs.ur5e_hande_cfg import get_cfg
+
+    # Initialize ROS node
+    rospy.init_node('ur5e_real_server_test', anonymous=True)
+
+    # Hardcoded target joint angles for the robot to reset to
+    RESET_JOINT_TARGET = [0, 0, 0, -1.9, -0, 2, 0]
+    cfgs = get_cfg()
+
+    ur5e_server = UR5eRealServer(cfgs=cfgs, reset_joint_target=RESET_JOINT_TARGET)
+
+    # # Test methods
+    # print('Joint positions:', ur5e_server.get_jpos())
+    # print('Joint velocities:', ur5e_server.get_jvel())
+
+    # ee_pos, ee_quat, ee_rot_mat, ee_euler = ur5e_server.get_ee_pose()
+    # print('End effector position:', ee_pos)
+    # print('End effector orientation (quaternion):', ee_quat)
+    # print('End effector orientation (rotation matrix):\n', ee_rot_mat)
+    # print('End effector orientation (euler angles):', ee_euler)
+
+    # ee_trans_vel, ee_rot_vel = ur5e_server.get_ee_vel()
+    # print('End effector translational velocity:', ee_trans_vel)
+    # print('End effector rotational velocity:', ee_rot_vel)
+
+    # wrench = ur5e_server.get_wrench()
+    # print('Wrench (force and torque):', wrench)
+
+    # # Move robot to a new joint position (example)
+    # new_joint_positions = [0, -1.2, 0.5, -1.0, 0.7, 0.0]
+    # print('Setting new joint positions:', new_joint_positions)
+    # ur5e_server.set_jpos(new_joint_positions, wait=True)
+    # print('New joint positions set.')
+
+    # # Move end effector to a new position
+    # new_ee_pos = [0.3, 0.0, 0.5]
+    # new_ee_ori = [0, 0.7071, 0, 0.7071]  # identity quaternion
+    # print('Setting new end effector pose:')
+    # print('Position:', new_ee_pos)
+    # print('Orientation (quaternion):', new_ee_ori)
+    # ur5e_server.set_ee_pose(new_ee_pos, new_ee_ori, wait=True)
+    
+    # ee_pos, ee_quat, ee_rot_mat, ee_euler = ur5e_server.get_ee_pose()
+    # print('End effector position:', ee_pos)
+    # print('End effector orientation (quaternion):', ee_quat)
+
+    # # Move end effector in XYZ directions
+    # delta_xyz = [0.0, 0.0, -0.1]
+    # print('Moving end effector by delta:', delta_xyz)
+    # ur5e_server.move_ee_xyz(delta_xyz, wait=True)
+
+    # ee_pos, ee_quat, ee_rot_mat, ee_euler = ur5e_server.get_ee_pose()
+    # print('End effector position:', ee_pos)
+    # print('End effector orientation (quaternion):', ee_quat)
+
+
+
+    # Test compute_ik function from RobotServer class
+    print('\nTesting compute_ik function:')
+    target_pos = [0.5, 0.0, 0.5]
+    target_ori = [0.5, 0.5, 0.5, 0.5]  # Identity quaternion
+    print('Target position:', target_pos)
+    print('Target orientation (quaternion):', target_ori)
+    ik_solution = ur5e_server.compute_ik(target_pos, target_ori)
+    if ik_solution is not None:
+        print('IK solution:', ik_solution)
+    else:
+        print('IK solution not found.')
+
+    # Test compute_fk_position function from RobotServer class
+    print('\nTesting compute_fk_position function:')
+    joint_positions = ur5e_server.get_jpos()
+    print('Current joint positions:', joint_positions)
+    ee_pos_fk, ee_rot_fk = ur5e_server.compute_fk_position(
+        joint_positions, ur5e_server.cfgs.ARM.ROBOT_EE_FRAME)
+    print('FK computed end effector position:', ee_pos_fk)
+    print('FK computed end effector rotation matrix:\n', ee_rot_fk)
+
+    # Test compute_fk_velocity function from RobotServer class
+    print('\nTesting compute_fk_velocity function:')
+    joint_velocities = ur5e_server.get_jvel()
+    ee_vel_fk = ur5e_server.compute_fk_velocity(
+        joint_positions, joint_velocities, ur5e_server.cfgs.ARM.ROBOT_EE_FRAME)
+    print('FK computed end effector velocity:', ee_vel_fk)
+
+    # Test get_jacobian function from RobotServer class
+    print('\nTesting get_jacobian function:')
+    jacobian = ur5e_server.get_jacobian(joint_positions)
+    print('Jacobian matrix:\n', jacobian)
