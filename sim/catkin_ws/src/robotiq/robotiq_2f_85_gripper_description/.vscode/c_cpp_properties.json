@@ -1,0 +1,37 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/opt/ros/jazzy/include/**",
+        "/home/fmdazhar/ws/internship/ws/docker_temp/ros1/ur5e_iff/catkin_ws/src/cambel/robotiq/robotiq_ft_sensor/include/**",
+        "/home/fmdazhar/ws/internship/ws/docker_temp/ros1/ur5e_iff/catkin_ws/src/cambel/robotiq/robotiq_gazebo/include/**",
+        "/home/fmdazhar/ws/internship/ws/docker_temp/ros1/ur5e_iff/catkin_ws/src/controllers/cartesian_controllers/cartesian_compliance_controller/include/**",
+        "/home/fmdazhar/ws/internship/ws/docker_temp/ros1/ur5e_iff/catkin_ws/src/controllers/cartesian_controllers/cartesian_controller_base/include/**",
+        "/home/fmdazhar/ws/internship/ws/docker_temp/ros1/ur5e_iff/catkin_ws/src/controllers/cartesian_controllers/cartesian_controller_handles/include/**",
+        "/home/fmdazhar/ws/internship/ws/docker_temp/ros1/ur5e_iff/catkin_ws/src/controllers/cartesian_controllers/cartesian_force_controller/include/**",
+        "/home/fmdazhar/ws/internship/ws/docker_temp/ros1/ur5e_iff/catkin_ws/src/controllers/cartesian_controllers/cartesian_motion_controller/include/**",
+        "/home/fmdazhar/ws/internship/ws/docker_temp/ros1/ur5e_iff/catkin_ws/src/controllers/cartesian_controllers/joint_to_cartesian_controller/include/**",
+        "/home/fmdazhar/ws/internship/ws/docker_temp/ros1/ur5e_iff/catkin_ws/src/controllers/low_pass_force_torque_sensor_controller/include/**",
+        "/home/fmdazhar/ws/internship/ws/docker_temp/ros1/ur5e_iff/catkin_ws/src/gazebo_pkgs/gazebo_gripper_action_controller/include/**",
+        "/home/fmdazhar/ws/internship/ws/docker_temp/ros1/ur5e_iff/catkin_ws/src/gazebo_pkgs/roboticsgroup_upatras_gazebo_plugins/include/**",
+        "/home/fmdazhar/ws/internship/ws/docker_temp/ros1/ur5e_iff/catkin_ws/src/onrobot/onrobot_rg2ft_action_server/include/**",
+        "/home/fmdazhar/ws/internship/ws/docker_temp/ros1/ur5e_iff/catkin_ws/src/robotiq/robotiq_2f_gripper_action_server/include/**",
+        "/home/fmdazhar/ws/internship/ws/docker_temp/ros1/ur5e_iff/catkin_ws/src/universal_robots/Universal_Robots_Client_Library/include/**",
+        "/home/fmdazhar/ws/internship/ws/docker_temp/ros1/ur5e_iff/catkin_ws/src/universal_robots/Universal_Robots_ROS_Driver/ur_calibration/include/**",
+        "/home/fmdazhar/ws/internship/ws/docker_temp/ros1/ur5e_iff/catkin_ws/src/universal_robots/Universal_Robots_ROS_Driver/ur_robot_driver/include/**",
+        "/home/fmdazhar/ws/internship/ws/docker_temp/ros1/ur5e_iff/catkin_ws/src/universal_robots/universal_robot/ur_kinematics/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}
