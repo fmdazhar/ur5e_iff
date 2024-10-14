@@ -13,7 +13,7 @@ int main(int argc, char **argv)
 
   robotiq_2f_gripper_action_server::Robotiq2FGripperParams cparams;
   private_nh.param<double>("min_angle", cparams.min_angle_, 0.0);
-  private_nh.param<double>("max_angle", cparams.max_angle_, 0.5);
+  private_nh.param<double>("max_angle", cparams.max_angle_, 0.8);
   private_nh.param<double>("min_effort", cparams.min_effort_, 20);
   private_nh.param<double>("max_effort", cparams.max_effort_, 185);
   private_nh.param<double>("default_effort", cparams.default_effort_, 100);

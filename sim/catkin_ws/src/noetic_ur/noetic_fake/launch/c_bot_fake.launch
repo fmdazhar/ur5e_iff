@@ -1,6 +1,6 @@
 <launch>
-    <arg name="controllers" default="joint_state_controller pos_joint_traj_controller gripper_action_controller"/>
-    <arg name="stopped_controllers" default="cartesian_motion_controller motion_control_handle cartesian_force_controller cartesian_compliance_controller"/>
+    <arg name="controllers" default="joint_state_controller cartesian_compliance_controller gripper_action_controller"/>
+    <arg name="stopped_controllers" default="pos_joint_traj_controller cartesian_motion_controller motion_control_handle cartesian_force_controller "/>
     <arg name="controller_config_file" default="$(find noetic_fake)/config/c_bot_controllers.yaml" />
     <arg name="moveit_controller_config_file" default="$(find noetic_fake)/config/c_bot_moveit_controllers.yaml" />
     <arg name="hw_config_file" default="$(find noetic_fake)/config/c_bot_hw.yaml" />

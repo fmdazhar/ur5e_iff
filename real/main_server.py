@@ -94,11 +94,20 @@ def main(_):
         from gripper.robotiq_gripper_server_sim import RobotiqGripperServerSim
         gripper_server = RobotiqGripperServerSim()
 
-        # # Initialize dynamic reconfigure clients
-        # solver_client = ReconfClient("/cartesian_compliance_controller/solver")
-        # pd_gains_client = ReconfClient("/cartesian_compliance_controller/pd_gains")
-        # stiffness_gains_client = ReconfClient("/cartesian_compliance_controller/stiffness")
+        # Initialize dynamic reconfigure clients
+        solver_client = ReconfClient("/cartesian_compliance_controller/solver")
+        stiffness_gains_client = ReconfClient("/cartesian_compliance_controller/stiffness")
+        forward_dynamics_client = ReconfClient("/cartesian_compliance_controller/solver/forward_dynamics")
 
+        # Initialize dynamic reconfigure clients for PD gains
+        pd_gains_clients = {
+            "trans_x": ReconfClient("/cartesian_compliance_controller/pd_gains/trans_x"),
+            "trans_y": ReconfClient("/cartesian_compliance_controller/pd_gains/trans_y"),
+            "trans_z": ReconfClient("/cartesian_compliance_controller/pd_gains/trans_z"),
+            "rot_x": ReconfClient("/cartesian_compliance_controller/pd_gains/rot_x"),
+            "rot_y": ReconfClient("/cartesian_compliance_controller/pd_gains/rot_y"),
+            "rot_z": ReconfClient("/cartesian_compliance_controller/pd_gains/rot_z")
+        }
 
         # Route for Getting End Effector Pose
         @webapp.route("/getposefull", methods=["POST"])
@@ -188,31 +197,43 @@ def main(_):
             robot_server.move_ee_xyz(delta_pos)
             return "Moved"
         
-        # # Route for updating compliance parameters
-        # @webapp.route("/update_solver_param", methods=["POST"])
-        # def update_solver_param():
-        #     solver_client.update_configuration(request.json)
-        #     return "Updated compliance parameters"
-        
-        # # Route for updating compliance parameters
-        # @webapp.route("/update_pd_gains_param", methods=["POST"])
-        # def update_pd_gains_param():
-        #     pd_gains_client.update_configuration(request.json)
-        #     return "Updated compliance parameters"
-        
-        # # Route for updating compliance parameters
-        # @webapp.route("/update_stiffness_gains_param", methods=["POST"])
-        # def update_stiffness_gains_param():
-        #     stiffness_gains_client.update_configuration(request.json)
-        #     return "Updated compliance parameters"
+        # Route for updating solver parameters
+        @webapp.route("/update_solver_param", methods=["POST"])
+        def update_solver_param():
+            config = {key: float(value) for key, value in request.form.items()}  # Parse form data as floats
+            solver_client.update_configuration(config)
+            return "Updated solver parameters"
+
+        # Route for updating stiffness gains parameters
+        @webapp.route("/update_stiffness_gains_param", methods=["POST"])
+        def update_stiffness_gains_param():
+            config = {key: float(value) for key, value in request.form.items()}  # Parse form data as floats
+            stiffness_gains_client.update_configuration(config)
+            return "Updated stiffness gains parameters"
+
+        # Route for updating forward dynamics parameters
+        @webapp.route("/update_forward_dynamics_param", methods=["POST"])
+        def update_forward_dynamics_param():
+            config = {key: float(value) for key, value in request.form.items()}  # Parse form data as floats
+            forward_dynamics_client.update_configuration(config)
+            return "Updated forward dynamics parameters"
+
+        # Route for updating PD gains parameters for a specific axis
+        @webapp.route("/update_pd_gains_param/<axis>", methods=["POST"])
+        def update_pd_gains_param(axis):
+            if axis in pd_gains_clients:
+                config = {key: float(value) for key, value in request.form.items()}  # Parse form data as floats
+                pd_gains_clients[axis].update_configuration(config)
+                return f"Updated PD gains for {axis}"
+            else:
+                return f"Invalid axis: {axis}", 400
 
         # Route for Running Joint Reset
         @webapp.route("/jointreset", methods=["POST"])
         def joint_reset():
-            robot_server.reset_joint(use_urscript=False)
+            robot_server.reset_joint()
             return "Reset Joint"
         
-
         # Route for getting gripper distance
         @webapp.route("/get_gripper", methods=["POST"])
         def get_gripper():

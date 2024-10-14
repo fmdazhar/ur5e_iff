@@ -19,7 +19,7 @@ from geometry_msgs.msg import PoseStamped, WrenchStamped
 
 
 import utils.common as arutil
-from utils.controller_utils import ControllerUtil
+import utils.controller_utils as controller_util
 from utils.ai_logger import Logger
 from utils.ros_util import get_tf_transform
 from utils.arm_util import wait_to_reach_jnt_goal, wait_to_reach_ee_goal
@@ -42,7 +42,6 @@ class UR5eRealServer(RobotServer):
         self._init_ros_consts()
         self._setup_pub_sub()
         self.is_jpos_in_good_range()
-        self.controller_util = ControllerUtil()  # Instantiate ControllerUtil here
 
         # Overwrite _reset_position if reset_joint_target is provided
         if reset_joint_target is not None:
@@ -371,7 +370,7 @@ class UR5eRealServer(RobotServer):
                 positions=position))
         self._joint_pos_pub.publish(goal_pos_msg)
 
-    def reset_joint(self, position, use_urscript=False):
+    def reset_joint(self, position=None, use_urscript=False):
         """Resets Joints (needed after running for hours)"""
 
         if position is None:
@@ -384,8 +383,8 @@ class UR5eRealServer(RobotServer):
         else:
             # First motion controller
             try:
-                self.controller_util.switch_on_controller(self.cfgs.ARM.ROBOT_JOINT_TRAJECTORY_CONTROLLER,
-                                        exclude_controllers=[self.cfgs.ARM.ROBOT_CARTESIAN_MOTION_CONTROLLER, self.cfgs.EETOOL.GRIPPER_ACTION_CONTROLLER])
+                controller_util.switch_on_controller(self.cfgs.ARM.ROBOT_JOINT_TRAJECTORY_CONTROLLER,
+                                        exclude_controllers=[self.cfgs.ARM.ROBOT_JOINT_STATE_CONTROLLER, self.cfgs.EETOOL.GRIPPER_ACTION_CONTROLLER])
             except Exception as e:
                 print(f"Error during joint reset: {e}")
             time.sleep(3)
@@ -403,8 +402,8 @@ class UR5eRealServer(RobotServer):
 
             #start impedance back
             try:
-                self.controller_util.switch_on_controller(self.cfgs.ARM.ROBOT_CARTESIAN_MOTION_CONTROLLER,
-                                        exclude_controllers=[self.cfgs.ARM.ROBOT_CARTESIAN_MOTION_CONTROLLER, self.cfgs.EETOOL.GRIPPER_ACTION_CONTROLLER])
+                controller_util.switch_on_controller(self.cfgs.ARM.ROBOT_CARTESIAN_MOTION_CONTROLLER,
+                                        exclude_controllers=[self.cfgs.ARM.ROBOT_JOINT_STATE_CONTROLLER, self.cfgs.EETOOL.GRIPPER_ACTION_CONTROLLER])
             except Exception as e:
                 print(f"Error during controller switch: {e}")
             time.sleep(1)

@@ -12,6 +12,9 @@ class RobotiqGripperServerSim(GripperServer):
         # Variable to store the gripper position
         self.gripper_pos = None
 
+        # Get min_angle and max_angle from ROS parameters
+        self.stroke = 0.025
+
         # Subscribe to the gripper's joint states
         self.joint_state_sub = rospy.Subscriber(
             "/joint_states",
@@ -57,38 +60,40 @@ class RobotiqGripperServerSim(GripperServer):
             if gripper_joint_name in msg.name:
                 index = msg.name.index(gripper_joint_name)
                 position = msg.position[index]
-                self.gripper_pos = position
+                # Normalize the position
+                normalized_position = position / self.stroke
+                normalized_position = round(normalized_position, 2)
+                self.gripper_pos = normalized_position
         except Exception as e:
             rospy.logerr(f"Error updating gripper position: {e}")
 
-
     def _generate_gripper_command(self, char, command):
         """Generate the gripper command based on input."""
-        if char == "a":  # Activate
-            command.command.position = 0.0  # Starting position (open)
-            command.command.max_effort = 100.0  # Max effort
+        try:
+            if char == "a":  # Activate
+                command.command.position = 0.0  # Starting position (open)
+                command.command.max_effort = 100.0  # Max effort
 
-        elif char == "r":  # Reset or stop (open completely)
-            command.command.position = 0.0
-            command.command.max_effort = 0.0  # Resetting with no effort
+            elif char == "r":  # Reset or stop (open completely)
+                command.command.position = 0.0
+                command.command.max_effort = 0.0  # Resetting with no effort
 
-        elif char == "c":  # Close fully
-            command.command.position = 1.0  # Fully close
-            command.command.max_effort = 100.0
+            elif char == "c":  # Close fully
+                command.command.position = 1.0  # Fully close
+                command.command.max_effort = 100.0
 
-        elif char == "o":  # Open fully
-            command.command.position = 0.0  # Fully open
-            command.command.max_effort = 100.0
+            elif char == "o":  # Open fully
+                command.command.position = 0.0  # Fully open
+                command.command.max_effort = 100.0
 
-        else:
-            try:
+            else:
                 # Move to a specific position (interpreting char as position)
                 position = float(char)
                 command.command.position = max(0.0, min(1.0, position))  # Clamp between 0 and 1
                 command.command.max_effort = 100.0
-            except ValueError:
-                pass
 
+        except ValueError:
+            rospy.logwarn(f"Invalid position value provided: {char}")
         return command
 
     def _send_gripper_command(self, command):
@@ -98,5 +103,42 @@ class RobotiqGripperServerSim(GripperServer):
         Args:
             command: The GripperCommandGoal message to send.
         """
-        self.gripper_client.send_goal(command)
-        self.gripper_client.wait_for_result()  # Optionally wait for the result
+        rospy.loginfo("Sending goal to the gripper action server.")
+        
+        # Send the goal and wait for it to complete, with a timeout of 10 seconds
+        self.gripper_client.send_goal_and_wait(command, rospy.Duration(10.0))
+        
+        # Check if the result was successful
+        result = self.gripper_client.get_result()
+        if result:
+            rospy.loginfo(f"Gripper position: {self.gripper_pos}")
+             #Print all attributes of the result
+            rospy.loginfo("Gripper result details:")
+            for attr in dir(result):
+                if not attr.startswith('_') and not callable(getattr(result, attr)):
+                    rospy.loginfo(f"{attr}: {getattr(result, attr)}")
+        else:
+            rospy.logwarn("Action did not finish before the timeout or was not successful.")
+            self.gripper_client.cancel_goal()  # Cancel the goal if it didn't complete
+
+    def cancel_all_goals(self):
+        """Cancels all running goals on the action server."""
+        rospy.loginfo("Canceling all goals on the action server.")
+        self.gripper_client.cancel_all_goals()
+
+    def stop_current_goal(self):
+        """Stops tracking and cancels the current goal if it's still running."""
+        rospy.loginfo("Canceling the current goal on the action server.")
+        self.gripper_client.cancel_goal()
+
+    def get_current_state(self):
+        """Gets the current state of the action server for the active goal."""
+        state = self.gripper_client.get_state()
+        rospy.loginfo(f"Current action server state: {state}")
+        return state
+
+    def get_goal_status(self):
+        """Gets the status text of the goal."""
+        status_text = self.gripper_client.get_goal_status_text()
+        rospy.loginfo(f"Goal status text: {status_text}")
+        return status_text

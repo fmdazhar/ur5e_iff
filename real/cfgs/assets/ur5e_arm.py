@@ -24,6 +24,7 @@ _C.LINK_NAMES = ['base_link_inertia', 'shoulder_link', 'upper_arm_link', 'forear
 # base frame for the arm
 _C.ROBOT_BASE_FRAME = 'base_link'
 _C.ROBOT_JOINT_TRAJECTORY_CONTROLLER = 'pos_joint_traj_controller'
+_C.ROBOT_JOINT_STATE_CONTROLLER = 'joint_state_controller'
 # joint command topic
 _C.ROBOT_JOINT_COMMAND_TOPIC = '/pos_joint_traj_controller/command'
 # end-effector frame of the arm
