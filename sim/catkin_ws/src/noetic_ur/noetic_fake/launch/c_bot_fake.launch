@@ -59,5 +59,9 @@
         <arg name="my_rviz" value="-d $(find noetic_fake)/rviz/c_bot_fake.rviz" />
         <node name="rviz" pkg="rviz" type="rviz" respawn="false" args="$(arg my_rviz)" output="screen" />
     </group>
+
+    <!-- Launch rqt_controller_manager window under /controller_manager namespace -->
+    <node name="rqt_controller_manager" pkg="rqt_controller_manager" type="rqt_controller_manager" output="screen" ns="/controller_manager" />
+
     
 </launch>

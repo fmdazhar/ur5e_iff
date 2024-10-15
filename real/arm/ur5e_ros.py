@@ -439,7 +439,7 @@ class UR5eRealServer(RobotServer):
         if joint_reset:
             print("JOINT RESET")
             # use movej from URScript
-            self.reset_joint(self, use_urscript=False)
+            self.reset_joint(use_urscript=False)
 
         # Initialize reset_pos and reset_ori
         reset_pos = pos.copy()
@@ -631,7 +631,7 @@ if __name__ == "__main__":
     rospy.init_node('ur5e_real_server_test', anonymous=True)
 
     # Hardcoded target joint angles for the robot to reset to
-    RESET_JOINT_TARGET = [0, 0, 0, -1.9, -0, 2, 0]
+    RESET_JOINT_TARGET = [0, 0, 0, -1.9, -0, 2]
     cfgs = get_cfg()
 
     ur5e_server = UR5eRealServer(cfgs=cfgs, reset_joint_target=RESET_JOINT_TARGET)
@@ -653,11 +653,25 @@ if __name__ == "__main__":
     wrench = ur5e_server.get_wrench()
     print('Wrench (force and torque):', wrench)
 
-    # Move robot to a new joint position (example)
-    new_joint_positions = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-    print('Setting new joint positions:', new_joint_positions)
-    ur5e_server.set_jpos(new_joint_positions, wait=True)
-    print('New joint positions set.')
+    # # Test reset_joint function
+    # print("Resetting joints to target position:", RESET_JOINT_TARGET)
+    # reset_success = ur5e_server.reset_joint()
+    # if reset_success:
+    #     print("Joint reset successful.")
+    # else:
+    #     print("Joint reset failed.")
+
+    # # Test go_to_rest function
+    # print("Moving the robot to home position.")
+    # home_pose = [0.5, 0.1, 0.3, 0, 0 ,0, 1]
+    # ur5e_server.go_to_rest(pose=home_pose, joint_reset=True)
+    # print("Robot moved to home position.")
+
+    # # Move robot to a new joint position (example)
+    # new_joint_positions = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    # print('Setting new joint positions:', new_joint_positions)
+    # ur5e_server.set_jpos(new_joint_positions, wait=True)
+    # print('New joint positions set.')
 
     # # Move end effector to a new position
     # new_ee_pos = [0.3, 0.0, 0.5]
