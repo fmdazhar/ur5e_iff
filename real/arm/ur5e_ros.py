@@ -315,7 +315,7 @@ class UR5eRealServer(RobotServer):
             if not isinstance(position, numbers.Number):
                 raise TypeError('position should be individual float value'
                                 ' if joint_name is provided')
-            if joint_name not in self.arm_jnt_names_set:
+            if joint_name not in self.arm_jnt_names:
                 raise TypeError('Joint name [%s] is not in the arm'
                                 ' joint list!' % joint_name)
             else:
@@ -337,7 +337,7 @@ class UR5eRealServer(RobotServer):
 
         else:
             try:
-                self._pub_joint_pos(position)
+                self._pub_joint_pos(tgt_pos)
             except rospy.ROSException:
                 # Swallow 'publish() to closed topic' error.
                 pass
@@ -365,10 +365,16 @@ class UR5eRealServer(RobotServer):
                 (length and order have already been checked).
         """
         goal_pos_msg = JointTrajectory()
-        goal_pos_msg.points.append(
-            JointTrajectoryPoint(
-                positions=position))
+        goal_pos_msg.joint_names = self.arm_jnt_names
+         # Create JointTrajectoryPoint message and add positions
+        goal_point = JointTrajectoryPoint()
+        goal_point.positions = position
+        goal_point.time_from_start = rospy.Duration(3.0)  # Specify the duration (adjust based on motion speed)
+
+        # Add the point to the trajectory message
+        goal_pos_msg.points.append(goal_point)
         self._joint_pos_pub.publish(goal_pos_msg)
+        print(f"Published joint trajectory: {goal_pos_msg}")
 
     def reset_joint(self, position=None, use_urscript=False):
         """Resets Joints (needed after running for hours)"""
@@ -392,13 +398,15 @@ class UR5eRealServer(RobotServer):
             # Launch joint controller reset
             print("RUNNING JOINT RESET")
             # Wait until target joint angles are reached
+            print(f"Attempting to set joint positions to: {position}")
             success = self.set_jpos(position, wait=True)
+            if not success:
+                current_positions = self.get_jpos()
+                print(f"JOINT RESET TIMEOUT. Target: {position}, Current: {current_positions}")
             # Stop joint controller
-            if success:
-                print("RESET DONE")
             else:
-                current_positions = self.get_jpos()  # Get current joint positions
-                print("JOINT RESET TIMEOUT", current_positions)
+                print("RESET DONE")
+
 
             #start impedance back
             try:
@@ -628,28 +636,28 @@ if __name__ == "__main__":
 
     ur5e_server = UR5eRealServer(cfgs=cfgs, reset_joint_target=RESET_JOINT_TARGET)
 
-    # # Test methods
-    # print('Joint positions:', ur5e_server.get_jpos())
-    # print('Joint velocities:', ur5e_server.get_jvel())
+    # Test methods
+    print('Joint positions:', ur5e_server.get_jpos())
+    print('Joint velocities:', ur5e_server.get_jvel())
 
-    # ee_pos, ee_quat, ee_rot_mat, ee_euler = ur5e_server.get_ee_pose()
-    # print('End effector position:', ee_pos)
-    # print('End effector orientation (quaternion):', ee_quat)
-    # print('End effector orientation (rotation matrix):\n', ee_rot_mat)
-    # print('End effector orientation (euler angles):', ee_euler)
+    ee_pos, ee_quat, ee_rot_mat, ee_euler = ur5e_server.get_ee_pose()
+    print('End effector position:', ee_pos)
+    print('End effector orientation (quaternion):', ee_quat)
+    print('End effector orientation (rotation matrix):\n', ee_rot_mat)
+    print('End effector orientation (euler angles):', ee_euler)
 
-    # ee_trans_vel, ee_rot_vel = ur5e_server.get_ee_vel()
-    # print('End effector translational velocity:', ee_trans_vel)
-    # print('End effector rotational velocity:', ee_rot_vel)
+    ee_trans_vel, ee_rot_vel = ur5e_server.get_ee_vel()
+    print('End effector translational velocity:', ee_trans_vel)
+    print('End effector rotational velocity:', ee_rot_vel)
 
-    # wrench = ur5e_server.get_wrench()
-    # print('Wrench (force and torque):', wrench)
+    wrench = ur5e_server.get_wrench()
+    print('Wrench (force and torque):', wrench)
 
-    # # Move robot to a new joint position (example)
-    # new_joint_positions = [0, -1.2, 0.5, -1.0, 0.7, 0.0]
-    # print('Setting new joint positions:', new_joint_positions)
-    # ur5e_server.set_jpos(new_joint_positions, wait=True)
-    # print('New joint positions set.')
+    # Move robot to a new joint position (example)
+    new_joint_positions = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    print('Setting new joint positions:', new_joint_positions)
+    ur5e_server.set_jpos(new_joint_positions, wait=True)
+    print('New joint positions set.')
 
     # # Move end effector to a new position
     # new_ee_pos = [0.3, 0.0, 0.5]
@@ -674,35 +682,35 @@ if __name__ == "__main__":
 
 
 
-    # Test compute_ik function from RobotServer class
-    print('\nTesting compute_ik function:')
-    target_pos = [0.5, 0.0, 0.5]
-    target_ori = [0.5, 0.5, 0.5, 0.5]  # Identity quaternion
-    print('Target position:', target_pos)
-    print('Target orientation (quaternion):', target_ori)
-    ik_solution = ur5e_server.compute_ik(target_pos, target_ori)
-    if ik_solution is not None:
-        print('IK solution:', ik_solution)
-    else:
-        print('IK solution not found.')
+    # # Test compute_ik function from RobotServer class
+    # print('\nTesting compute_ik function:')
+    # target_pos = [0.5, 0.0, 0.5]
+    # target_ori = [0.5, 0.5, 0.5, 0.5]  # Identity quaternion
+    # print('Target position:', target_pos)
+    # print('Target orientation (quaternion):', target_ori)
+    # ik_solution = ur5e_server.compute_ik(target_pos, target_ori)
+    # if ik_solution is not None:
+    #     print('IK solution:', ik_solution)
+    # else:
+    #     print('IK solution not found.')
 
-    # Test compute_fk_position function from RobotServer class
-    print('\nTesting compute_fk_position function:')
-    joint_positions = ur5e_server.get_jpos()
-    print('Current joint positions:', joint_positions)
-    ee_pos_fk, ee_rot_fk = ur5e_server.compute_fk_position(
-        joint_positions, ur5e_server.cfgs.ARM.ROBOT_EE_FRAME)
-    print('FK computed end effector position:', ee_pos_fk)
-    print('FK computed end effector rotation matrix:\n', ee_rot_fk)
+    # # Test compute_fk_position function from RobotServer class
+    # print('\nTesting compute_fk_position function:')
+    # joint_positions = ur5e_server.get_jpos()
+    # print('Current joint positions:', joint_positions)
+    # ee_pos_fk, ee_rot_fk = ur5e_server.compute_fk_position(
+    #     joint_positions, ur5e_server.cfgs.ARM.ROBOT_EE_FRAME)
+    # print('FK computed end effector position:', ee_pos_fk)
+    # print('FK computed end effector rotation matrix:\n', ee_rot_fk)
 
-    # Test compute_fk_velocity function from RobotServer class
-    print('\nTesting compute_fk_velocity function:')
-    joint_velocities = ur5e_server.get_jvel()
-    ee_vel_fk = ur5e_server.compute_fk_velocity(
-        joint_positions, joint_velocities, ur5e_server.cfgs.ARM.ROBOT_EE_FRAME)
-    print('FK computed end effector velocity:', ee_vel_fk)
+    # # Test compute_fk_velocity function from RobotServer class
+    # print('\nTesting compute_fk_velocity function:')
+    # joint_velocities = ur5e_server.get_jvel()
+    # ee_vel_fk = ur5e_server.compute_fk_velocity(
+    #     joint_positions, joint_velocities, ur5e_server.cfgs.ARM.ROBOT_EE_FRAME)
+    # print('FK computed end effector velocity:', ee_vel_fk)
 
-    # Test get_jacobian function from RobotServer class
-    print('\nTesting get_jacobian function:')
-    jacobian = ur5e_server.get_jacobian(joint_positions)
-    print('Jacobian matrix:\n', jacobian)
+    # # Test get_jacobian function from RobotServer class
+    # print('\nTesting get_jacobian function:')
+    # jacobian = ur5e_server.get_jacobian(joint_positions)
+    # print('Jacobian matrix:\n', jacobian)

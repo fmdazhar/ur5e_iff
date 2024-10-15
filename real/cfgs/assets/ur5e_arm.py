@@ -38,14 +38,14 @@ _C.URSCRIPT_TOPIC = '/ur_driver/URScript'
 _C.IK_POSITION_TOLERANCE = 0.01
 # inverse kinematics orientation tolerance (rad)
 _C.IK_ORIENTATION_TOLERANCE = 0.05
-_C.RESET_POSITION = [0, -1.66, -1.92, -1.12, 1.57, 0]
+_C.RESET_POSITION = [8.920186897739795e-06, -1.5707640164589534, 1.5706121875638157, -1.570648390955152, -1.5707592285401182, 3.1414248564251217]
 _C.HOME_POSE = [0, 0, 0, 0, 0, 0, 0]
 _C.MAX_JOINT_ERROR = 0.01
 _C.MAX_JOINT_VEL_ERROR = 0.05
-_C.MAX_EE_POS_ERROR = 0.001
+_C.MAX_EE_POS_ERROR = 0.01
 # real part of the quaternion difference should be
 # greater than 1-error
-_C.MAX_EE_ORI_ERROR = 0.002
+_C.MAX_EE_ORI_ERROR = 0.02
 _C.TIMEOUT_LIMIT = 10
 
 _C.RANDOM_XY_RANGE = 0.05  # Max random XY range during reset

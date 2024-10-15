@@ -16,7 +16,7 @@ from dynamic_reconfigure.client import Client as ReconfClient
 FLAGS = flags.FLAGS
 flags.DEFINE_list(
     "reset_joint_target",
-    [0, 0, 0, -1.9, -0, 2, 0],
+    [0, -1.66, -1.92, -1.12, 1.57, 0],
     "Target joint angles for the robot to reset to",
 )
 
