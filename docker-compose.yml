@@ -16,7 +16,8 @@ services:
       # Grant display access to X Server.
       - /tmp/.X11-unix:/tmp/.X11-unix
       - "/dev:/dev"
-      - ./catkin_ws/src:/root/catkin_ws/src
+      - ./sim/catkin_ws/src:/root/sim/catkin_ws/src
+      - ./real:/root/real
       # Grant access to 3D mouse 
       - /var/run/spnav.sock:/var/run/spnav.sock
     # deploy:

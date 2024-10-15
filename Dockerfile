@@ -43,13 +43,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     python3-catkin-tools \
     && rm -rf /var/lib/apt/lists/*
 
-# Install python dependencies
-RUN pip3 install \ 
-    pyserial \
-    pymodbus===2.1.0 \
-    numpy \
-    scipy 
-
 # Install dependencies
 RUN apt-get update && apt-get install --no-install-recommends -y \
     ros-noetic-realsense2-camera ros-noetic-realsense2-description ros-noetic-rqt-controller-manager \
@@ -61,11 +54,20 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     ros-noetic-moveit \
     && rm -rf /var/lib/apt/lists/*
 
-# Set the working directory in the container
-WORKDIR /root/catkin_ws
+# Copy the 'real' and 'sim' directories into the container
+COPY ./real /root/real
+COPY ./sim /root/sim
 
-# Copy the 'src' directory from 'catkin_ws' to the container's workspace
-COPY ./catkin_ws/src ./src
+# Install Python packages for 'real'
+RUN cd /root/real && \
+pip3 install -e .
+
+# Install Python packages for 'sim'
+RUN cd /root/sim && \
+pip3 install -e .
+
+# Set the working directory in the container
+WORKDIR /root/sim/catkin_ws
 
 RUN source /opt/ros/noetic/setup.bash && \
     apt-get update && rosdep install -q -y \
@@ -79,7 +81,7 @@ RUN source /opt/ros/noetic/setup.bash && \
     catkin build
 
 # Source the workspace setup files on container startup
-RUN echo "source /root/catkin_ws/devel/setup.bash" >> ~/.bashrc
+RUN echo "source /root/sim/catkin_ws/devel/setup.bash" >> ~/.bashrc
 
 # After building the ROS workspace, add the GUI control configuration for Gazebo
 RUN mkdir -p ~/.gazebo && \
