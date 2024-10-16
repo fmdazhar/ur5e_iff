@@ -18,7 +18,7 @@ from mujoco_sim.mujoco_gym_env import GymRenderingSpec, MujocoGymEnv
 
 _HERE = Path(__file__).parent
 _XML_PATH = _HERE / "xmls" / "ur5e_arena.xml"
-_UR5E_HOME = np.asarray((0, -1.57, 0, -1.57, 0, 1.57))  # UR5e home position
+_UR5E_HOME = np.asarray((-1.5708, -1.5708, 1.5708, -1.5708, -1.5708, 0)) # UR5e home position
 _CARTESIAN_BOUNDS = np.asarray([[0.2, -0.3, 0], [0.6, 0.3, 0.5]])
 _SAMPLING_BOUNDS = np.asarray([[0.25, -0.25], [0.55, 0.25]])
 
@@ -63,24 +63,24 @@ class PandaPickCubeGymEnv(MujocoGymEnv):
         # Caching.
         # Caching UR5e joint and actuator IDs.
         self._ur5e_dof_ids = np.asarray([
-            self._model.joint("shoulder_pan_joint").id,   # Joint 1: Shoulder pan
-            self._model.joint("shoulder_lift_joint").id,  # Joint 2: Shoulder lift
-            self._model.joint("elbow_joint").id,          # Joint 3: Elbow
-            self._model.joint("wrist_1_joint").id,        # Joint 4: Wrist 1
-            self._model.joint("wrist_2_joint").id,        # Joint 5: Wrist 2
-            self._model.joint("wrist_3_joint").id         # Joint 6: Wrist 3
+            self._model.joint("ur5e/shoulder_pan_joint").id,   # Joint 1: Shoulder pan
+            self._model.joint("ur5e/shoulder_lift_joint").id,  # Joint 2: Shoulder lift
+            self._model.joint("ur5e/elbow_joint").id,          # Joint 3: Elbow
+            self._model.joint("ur5e/wrist_1_joint").id,        # Joint 4: Wrist 1
+            self._model.joint("ur5e/wrist_2_joint").id,        # Joint 5: Wrist 2
+            self._model.joint("ur5e/wrist_3_joint").id         # Joint 6: Wrist 3
         ])
 
         self._ur5e_ctrl_ids = np.asarray([
-            self._model.actuator("shoulder_pan").id,      # Actuator for Joint 1
-            self._model.actuator("shoulder_lift").id,     # Actuator for Joint 2
-            self._model.actuator("elbow").id,             # Actuator for Joint 3
-            self._model.actuator("wrist_1").id,           # Actuator for Joint 4
-            self._model.actuator("wrist_2").id,           # Actuator for Joint 5
-            self._model.actuator("wrist_3").id            # Actuator for Joint 6
+            self._model.actuator("ur5e/shoulder_pan").id,      # Actuator for Joint 1
+            self._model.actuator("ur5e/shoulder_lift").id,     # Actuator for Joint 2
+            self._model.actuator("ur5e/elbow").id,             # Actuator for Joint 3
+            self._model.actuator("ur5e/wrist_1").id,           # Actuator for Joint 4
+            self._model.actuator("ur5e/wrist_2").id,           # Actuator for Joint 5
+            self._model.actuator("ur5e/wrist_3").id            # Actuator for Joint 6
         ])
 
-        self._gripper_ctrl_id = self._model.actuator("hande_fingers_actuator").id
+        self._gripper_ctrl_id = self._model.actuator("ur5e/robotiq_hande/hande_fingers_actuator").id
         self._pinch_site_id = self._model.site("pinch").id
         self._block_z = self._model.geom("block").size[2]
 
@@ -157,7 +157,7 @@ class PandaPickCubeGymEnv(MujocoGymEnv):
         self._viewer = MujocoRenderer(
             self.model,
             self.data,
-            width=640, height=480
+            width= render_spec.width, height=render_spec.height,
         )
         self._viewer.render(self.render_mode)
 

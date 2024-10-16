@@ -22,12 +22,8 @@ frames = []
 for i in range(200):
     a = sample()
     obs, rew, done, truncated, info = env.step(a)
-    images = obs["images"]
-    frames.append(np.concatenate((images["front"], images["wrist"]), axis=0))
 
     if done:
         obs, info = env.reset()
 
-import imageio
 
-imageio.mimsave("franka_lift_cube_render_test.mp4", frames, fps=20)

@@ -1,1 +1,0 @@
-from mujoco_sim.props.primitive import Primitive

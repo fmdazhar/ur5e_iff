@@ -1,5 +1,5 @@
 <mujoco model="Arena">
-  <include file="ur5e_copy.xml"/>
+  <include file="mjmodel.xml"/>
 
   <option timestep=".002" noslip_iterations="5" noslip_tolerance="0"/>
 
