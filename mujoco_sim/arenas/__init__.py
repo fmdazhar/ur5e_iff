@@ -1,0 +1,1 @@
+from mujoco_sim.arenas.standard import StandardArena
