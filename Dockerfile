@@ -47,9 +47,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 # Install dependencies
 RUN apt-get update && apt-get install --no-install-recommends -y \
     ros-noetic-realsense2-camera ros-noetic-realsense2-description ros-noetic-rqt-controller-manager ros-noetic-trac-ik\
-    libspnav-dev spacenavd libhidapi-dev\
-    && pip3 install numpy-quaternion open3d pyspacemouse 
-
+    libspnav-dev spacenavd libhidapi-dev tmux
 # Install ROS dependencies
 RUN apt-get update && apt-get install --no-install-recommends -y \
     ros-noetic-moveit \
@@ -66,6 +64,8 @@ RUN cd /root/real && \
 # Install Python packages for 'sim'
 RUN cd /root/sim && \
     pip3 install -e .
+
+RUN chmod +x /root/real/start_tmux.sh /root/real/kill_tmux.sh
 
 # Set the working directory in the container
 WORKDIR /root/sim/catkin_ws
@@ -90,6 +90,9 @@ RUN echo "alias ursim='roslaunch noetic_fake c_bot_fake.launch'" >> ~/.bashrc &&
     echo "alias main='python3 /root/real/main_server.py'" >> ~/.bashrc && \
     echo "alias source='source /root/sim/catkin_ws/devel/setup.bash'" >> ~/.bashrc
 
+# Add aliases with short names for the tmux scripts
+RUN echo "alias stmux='bash /root/real/start_tmux.sh'" >> ~/.bashrc && \
+    echo "alias ktmux='bash /root/real/kill_tmux.sh'" >> ~/.bashrc
 
 # After building the ROS workspace, add the GUI control configuration for Gazebo
 RUN mkdir -p ~/.gazebo && \
