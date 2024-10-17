@@ -1,4 +1,5 @@
 FROM osrf/ros:noetic-desktop-full AS base
+#FROM nvidia/cudagl:11.1.1-base-ubuntu20.04 as base
 
 SHELL ["/bin/bash", "-c"]
 
