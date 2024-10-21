@@ -20,6 +20,9 @@ d = env.data
 
 reset = False
 KEY_SPACE = 32
+action = sample()  # Generate an initial action sample
+last_sample_time = time.time()  # Track the last sample time
+
 
 
 def key_callback(keycode):
@@ -34,10 +37,18 @@ with mujoco.viewer.launch_passive(m, d, key_callback=key_callback) as viewer:
     while viewer.is_running():
         if reset:
             env.reset()
+            action = sample()  # Generate a new action sample
+            last_sample_time = time.time()  # Reset the action timer
             reset = False
         else:
             step_start = time.time()
-            env.step(sample())
+
+            # Update the action every 3 seconds
+            if time.time() - last_sample_time >= 3.0:
+                action = sample()  # Generate a new action sample
+                last_sample_time = time.time()  # Update the last sample time
+
+            env.step(action)
             viewer.sync()
             time_until_next_step = env.control_dt - (time.time() - step_start)
             if time_until_next_step > 0:
