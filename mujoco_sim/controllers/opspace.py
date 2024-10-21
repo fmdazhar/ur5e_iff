@@ -1,5 +1,5 @@
 from typing import Optional, Tuple, Union
-
+import time
 import mujoco
 import numpy as np
 from dm_robotics.transformations import transformations as tr
@@ -64,13 +64,11 @@ def opspace(
     pos: Optional[np.ndarray] = None,
     ori: Optional[np.ndarray] = None,
     joint: Optional[np.ndarray] = None,
-    pos_gains: Union[Tuple[float, float, float], np.ndarray] = (200.0, 200.0, 200.0),
-    ori_gains: Union[Tuple[float, float, float], np.ndarray] = (200.0, 200.0, 200.0),
+    pos_gains: Union[Tuple[float, float, float], np.ndarray] = (1.0, 1.0, 1.0),
+    ori_gains: Union[Tuple[float, float, float], np.ndarray] = (0.5, 0.5, 0.5),
     damping_ratio: float = 1.0,
-    nullspace_stiffness: float = 0.5,
     max_pos_acceleration: Optional[float] = None,
     max_ori_acceleration: Optional[float] = None,
-    gravity_comp: bool = True,
 ) -> np.ndarray:
     if pos is None:
         x_des = data.site_xpos[site_id]
@@ -97,10 +95,6 @@ def opspace(
     kp = np.asarray(ori_gains)
     kd = damping_ratio * 2 * np.sqrt(kp)
     kp_kv_ori = np.stack([kp, kd], axis=-1)
-
-    kp_joint = np.full((len(dof_ids),), nullspace_stiffness)
-    kd_joint = damping_ratio * 2 * np.sqrt(kp_joint)
-    kp_kv_joint = np.stack([kp_joint, kd_joint], axis=-1)
 
     ddx_max = max_pos_acceleration if max_pos_acceleration is not None else 0.0
     dw_max = max_ori_acceleration if max_ori_acceleration is not None else 0.0
@@ -162,19 +156,10 @@ def opspace(
 
     # Compute generalized forces.
     ddx_dw = np.concatenate([ddx, dw], axis=0)
-    tau = J.T @ Mx @ ddx_dw
+    # J_pinv = np.linalg.pinv(J)
+    dq = J.T @ Mx @ ddx_dw
 
-    # Add joint task in nullspace.
-    ddq = pd_control(
-        x=q,
-        x_des=q_des,
-        dx=dq,
-        kp_kv=kp_kv_joint,
-        ddx_max=0.0,
-    )
-    Jnull = M_inv @ J.T @ Mx
-    tau += (np.eye(len(q)) - J.T @ Jnull.T) @ ddq
+    # Compute final joint position command.
+    q_des += dq
 
-    if gravity_comp:
-        tau += data.qfrc_bias[dof_ids]
-    return tau
+    return q_des

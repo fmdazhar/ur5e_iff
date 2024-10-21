@@ -63,25 +63,60 @@ class PandaPickCubeGymEnv(MujocoGymEnv):
         # Caching.
         # Caching UR5e joint and actuator IDs.
         self._ur5e_dof_ids = np.asarray([
-            self._model.joint("ur5e/shoulder_pan_joint").id,   # Joint 1: Shoulder pan
-            self._model.joint("ur5e/shoulder_lift_joint").id,  # Joint 2: Shoulder lift
-            self._model.joint("ur5e/elbow_joint").id,          # Joint 3: Elbow
-            self._model.joint("ur5e/wrist_1_joint").id,        # Joint 4: Wrist 1
-            self._model.joint("ur5e/wrist_2_joint").id,        # Joint 5: Wrist 2
-            self._model.joint("ur5e/wrist_3_joint").id         # Joint 6: Wrist 3
+            self._model.joint("shoulder_pan_joint").id,   # Joint 1: Shoulder pan
+            self._model.joint("shoulder_lift_joint").id,  # Joint 2: Shoulder lift
+            self._model.joint("elbow_joint").id,          # Joint 3: Elbow
+            self._model.joint("wrist_1_joint").id,        # Joint 4: Wrist 1
+            self._model.joint("wrist_2_joint").id,        # Joint 5: Wrist 2
+            self._model.joint("wrist_3_joint").id         # Joint 6: Wrist 3
         ])
-
+        
         self._ur5e_ctrl_ids = np.asarray([
-            self._model.actuator("ur5e/shoulder_pan").id,      # Actuator for Joint 1
-            self._model.actuator("ur5e/shoulder_lift").id,     # Actuator for Joint 2
-            self._model.actuator("ur5e/elbow").id,             # Actuator for Joint 3
-            self._model.actuator("ur5e/wrist_1").id,           # Actuator for Joint 4
-            self._model.actuator("ur5e/wrist_2").id,           # Actuator for Joint 5
-            self._model.actuator("ur5e/wrist_3").id            # Actuator for Joint 6
+            self._model.actuator("shoulder_pan").id,      # Actuator for Joint 1
+            self._model.actuator("shoulder_lift").id,     # Actuator for Joint 2
+            self._model.actuator("elbow").id,             # Actuator for Joint 3
+            self._model.actuator("wrist_1").id,           # Actuator for Joint 4
+            self._model.actuator("wrist_2").id,           # Actuator for Joint 5
+            self._model.actuator("wrist_3").id            # Actuator for Joint 6
         ])
+        # body_names = [
+        #         # "base",
+        #         "shoulder_link",
+        #         "upper_arm_link",
+        #         "forearm_link",
+        #         "wrist_1_link",
+        #         "wrist_2_link",
+        #         "wrist_3_link",
+        #         # "tool0_link",
+        #         # "hande",
+        #         # "hande_left_finger",
+        #         # "hande_right_finger",
+        #         ]
+        # self.body_ids = [self._model.body(name).id for name in body_names]
+           
+        #Get the base body ID
+        base_body_id = self._model.body("base").id
 
-        self._gripper_ctrl_id = self._model.actuator("ur5e/robotiq_hande/hande_fingers_actuator").id
+        # Initialize stack and list to store body IDs for the subtree
+        stack = [base_body_id]
+        self.body_ids = []
+
+        # Traverse the subtree and collect all body IDs
+        while stack:
+            body_id = stack.pop()
+            self.body_ids.append(body_id)
+            
+            # Find and add immediate child bodies to the stack
+            stack += [
+                i
+                for i in range(self._model.nbody)
+                if self._model.body_parentid[i] == body_id and body_id != i  # Exclude itself
+            ]
+        print(self.body_ids)   
+        
+        self._gripper_ctrl_id = self._model.actuator("hande_fingers_actuator").id
         self._pinch_site_id = self._model.site("pinch").id
+        # print(self._pinch_site_id)
         self._block_z = self._model.geom("block").size[2]
 
         self.observation_space = gym.spaces.Dict(
@@ -169,6 +204,8 @@ class PandaPickCubeGymEnv(MujocoGymEnv):
 
         # Reset arm to home position.
         self._data.qpos[self._ur5e_dof_ids] = _UR5E_HOME
+        self._data.qvel[self._ur5e_dof_ids] = 0  # Ensure joint velocities are zero
+
         mujoco.mj_forward(self._model, self._data)
 
         # Reset mocap body to home position.
@@ -217,19 +254,38 @@ class PandaPickCubeGymEnv(MujocoGymEnv):
         self._data.ctrl[self._gripper_ctrl_id] = ng * 255
 
         for _ in range(self._n_substeps):
-            tau = opspace(
-                model=self._model,
-                data=self._data,
-                site_id=self._pinch_site_id,
-                dof_ids=self._ur5e_dof_ids,
-                pos=self._data.mocap_pos[0],
-                ori=self._data.mocap_quat[0],
-                joint=_UR5E_HOME,
-                gravity_comp=True,
-            )
-            self._data.ctrl[self._ur5e_ctrl_ids] = tau
-            mujoco.mj_step(self._model, self._data)
+            # tau = opspace(
+            #     model=self._model,
+            #     data=self._data,
+            #     site_id=self._pinch_site_id,
+            #     dof_ids=self._ur5e_dof_ids,
+            #     pos=self._data.mocap_pos[0],
+            #     ori=self._data.mocap_quat[0],
+            #     joint=_UR5E_HOME,
+            # )
+            # self._data.ctrl[self._ur5e_ctrl_ids] = tau
 
+
+            self._data.qfrc_applied[:] = 0.0
+            jac = np.empty((3, self._model.nv))
+
+            # for i in self.body_ids:
+            #     body_weight = self._model.opt.gravity * self._model.body(i).mass
+            #     mujoco.mj_jac(self._model, self._data, jac, None, self._data.body(i).xipos, i)
+            #     q_weight = jac.T @ body_weight
+            #     self._data.qfrc_applied[:] -= q_weight
+
+            subtreeid = 1
+            total_mass = self._model.body_subtreemass[subtreeid]
+            mujoco.mj_jacSubtreeCom(self._model, self._data, jac, subtreeid)
+            self._data.qfrc_applied[:] -=  self._model.opt.gravity * total_mass @ jac
+            
+            # Integrate joint velocities to obtain joint positions.
+            q = self._data.qpos.copy()
+            self._data.ctrl[self._ur5e_ctrl_ids] = q[self._ur5e_dof_ids]
+
+            mujoco.mj_step(self._model, self._data)
+            
         obs = self._compute_observation()
         rew = self._compute_reward()
         terminated = self.time_limit_exceeded()

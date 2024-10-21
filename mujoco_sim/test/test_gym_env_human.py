@@ -42,3 +42,5 @@ with mujoco.viewer.launch_passive(m, d, key_callback=key_callback) as viewer:
             time_until_next_step = env.control_dt - (time.time() - step_start)
             if time_until_next_step > 0:
                 time.sleep(time_until_next_step)
+                # print(f"End-effector position: {d.site_xpos[8]}")
+                # print(f"Target position: {d.mocap_pos}")
