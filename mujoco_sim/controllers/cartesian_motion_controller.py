@@ -152,6 +152,7 @@ def cartesain_motion_controller(
 
     # Compute generalized forces.
     ddx_dw = np.concatenate([ddx, dw], axis=0)
+
     # J_pinv = np.linalg.pinv(J)
     delta_q = J.T @ Mx @ ddx_dw
 
