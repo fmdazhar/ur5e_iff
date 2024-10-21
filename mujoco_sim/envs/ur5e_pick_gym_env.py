@@ -93,26 +93,6 @@ class ur5ePickCubeGymEnv(MujocoGymEnv):
         #         # "hande_right_finger",
         #         ]
         # self.body_ids = [self._model.body(name).id for name in body_names]
-           
-        #Get the base body ID
-        base_body_id = self._model.body("base").id
-
-        # Initialize stack and list to store body IDs for the subtree
-        stack = [base_body_id]
-        self.body_ids = []
-
-        # Traverse the subtree and collect all body IDs
-        while stack:
-            body_id = stack.pop()
-            self.body_ids.append(body_id)
-            
-            # Find and add immediate child bodies to the stack
-            stack += [
-                i
-                for i in range(self._model.nbody)
-                if self._model.body_parentid[i] == body_id and body_id != i  # Exclude itself
-            ]
-        print(self.body_ids)   
         
         self._gripper_ctrl_id = self._model.actuator("hande_fingers_actuator").id
         self._pinch_site_id = self._model.site("pinch").id
