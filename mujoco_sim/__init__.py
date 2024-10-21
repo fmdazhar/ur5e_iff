@@ -8,13 +8,13 @@ __all__ = [
 from gym.envs.registration import register
 
 register(
-    id="PandaPickCube-v0",
-    entry_point="mujoco_sim.envs:PandaPickCubeGymEnv",
+    id="ur5ePickCube-v0",
+    entry_point="mujoco_sim.envs:ur5ePickCubeGymEnv",
     max_episode_steps=100,
 )
 register(
-    id="PandaPickCubeVision-v0",
-    entry_point="mujoco_sim.envs:PandaPickCubeGymEnv",
+    id="ur5ePickCubeVision-v0",
+    entry_point="mujoco_sim.envs:ur5ePickCubeGymEnv",
     max_episode_steps=100,
     kwargs={"image_obs": True},
 )

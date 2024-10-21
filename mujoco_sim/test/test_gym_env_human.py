@@ -6,13 +6,13 @@ import numpy as np
 
 from mujoco_sim import envs
 
-env = envs.PandaPickCubeGymEnv(action_scale=(0.1, 1))
+env = envs.ur5ePickCubeGymEnv(action_scale=(0.1, 1))
 action_spec = env.action_space
 
 
 def sample():
-    # a = np.random.uniform(action_spec.low, action_spec.high, action_spec.shape)
-    a = np.zeros(action_spec.shape, dtype=action_spec.dtype)
+    a = np.random.uniform(action_spec.low, action_spec.high, action_spec.shape)
+    # a = np.zeros(action_spec.shape, dtype=action_spec.dtype)
     return a.astype(action_spec.dtype)
 
 m = env.model

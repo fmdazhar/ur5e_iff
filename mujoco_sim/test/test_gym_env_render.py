@@ -7,7 +7,7 @@ import numpy as np
 
 import mujoco_sim
 
-env = gym.make("PandaPickCubeVision-v0", render_mode="human", image_obs=True)
+env = gym.make("ur5ePickCubeVision-v0", render_mode="human", image_obs=True)
 action_spec = env.action_space
 
 

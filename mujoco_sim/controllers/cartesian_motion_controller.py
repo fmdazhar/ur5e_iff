@@ -56,16 +56,15 @@ def pd_control_orientation(
     return ori_err + w_err
 
 
-def opspace(
+def cartesain_motion_controller(
     model,
     data,
     site_id,
     dof_ids: np.ndarray,
     pos: Optional[np.ndarray] = None,
     ori: Optional[np.ndarray] = None,
-    joint: Optional[np.ndarray] = None,
-    pos_gains: Union[Tuple[float, float, float], np.ndarray] = (1.0, 1.0, 1.0),
-    ori_gains: Union[Tuple[float, float, float], np.ndarray] = (0.5, 0.5, 0.5),
+    pos_gains: Union[Tuple[float, float, float], np.ndarray] = (200.0, 200.0, 200.0),
+    ori_gains: Union[Tuple[float, float, float], np.ndarray] = (200.0, 200.0, 200.0),
     damping_ratio: float = 1.0,
     max_pos_acceleration: Optional[float] = None,
     max_ori_acceleration: Optional[float] = None,
@@ -83,10 +82,7 @@ def opspace(
             quat_des = tr.mat_to_quat(ori)
         else:
             quat_des = ori
-    if joint is None:
-        q_des = data.qpos[dof_ids]
-    else:
-        q_des = np.asarray(joint)
+
 
     kp = np.asarray(pos_gains)
     kd = damping_ratio * 2 * np.sqrt(kp)
@@ -100,7 +96,7 @@ def opspace(
     dw_max = max_ori_acceleration if max_ori_acceleration is not None else 0.0
 
     # Get current state.
-    q = data.qpos[dof_ids]
+    q_des = data.qpos[dof_ids]
     dq = data.qvel[dof_ids]
 
     # Compute Jacobian of the eef site in world frame.
@@ -157,9 +153,9 @@ def opspace(
     # Compute generalized forces.
     ddx_dw = np.concatenate([ddx, dw], axis=0)
     # J_pinv = np.linalg.pinv(J)
-    dq = J.T @ Mx @ ddx_dw
+    delta_q = J.T @ Mx @ ddx_dw
 
     # Compute final joint position command.
-    q_des += dq
+    q_des += delta_q
 
     return q_des

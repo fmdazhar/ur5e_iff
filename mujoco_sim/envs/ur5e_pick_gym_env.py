@@ -13,7 +13,7 @@ except ImportError as e:
 else:
     MUJOCO_PY_IMPORT_ERROR = None
 
-from mujoco_sim.controllers import opspace
+from mujoco_sim.controllers import cartesain_motion_controller
 from mujoco_sim.mujoco_gym_env import GymRenderingSpec, MujocoGymEnv
 
 _HERE = Path(__file__).parent
@@ -23,7 +23,7 @@ _CARTESIAN_BOUNDS = np.asarray([[0.2, -0.3, 0], [0.6, 0.3, 0.5]])
 _SAMPLING_BOUNDS = np.asarray([[0.25, -0.25], [0.55, 0.25]])
 
 
-class PandaPickCubeGymEnv(MujocoGymEnv):
+class ur5ePickCubeGymEnv(MujocoGymEnv):
     metadata = {"render_modes": ["rgb_array", "human"]}
 
     def __init__(
@@ -254,35 +254,33 @@ class PandaPickCubeGymEnv(MujocoGymEnv):
         self._data.ctrl[self._gripper_ctrl_id] = ng * 255
 
         for _ in range(self._n_substeps):
-            # tau = opspace(
-            #     model=self._model,
-            #     data=self._data,
-            #     site_id=self._pinch_site_id,
-            #     dof_ids=self._ur5e_dof_ids,
-            #     pos=self._data.mocap_pos[0],
-            #     ori=self._data.mocap_quat[0],
-            #     joint=_UR5E_HOME,
-            # )
-            # self._data.ctrl[self._ur5e_ctrl_ids] = tau
-
+            ctrl = cartesain_motion_controller(
+                model=self._model,
+                data=self._data,
+                site_id=self._pinch_site_id,
+                dof_ids=self._ur5e_dof_ids,
+                pos=self._data.mocap_pos[0],
+                ori=self._data.mocap_quat[0],
+            )
+            self._data.ctrl[self._ur5e_ctrl_ids] = ctrl
 
             self._data.qfrc_applied[:] = 0.0
             jac = np.empty((3, self._model.nv))
+
+            subtreeid = 1
+            total_mass = self._model.body_subtreemass[subtreeid]
+            mujoco.mj_jacSubtreeCom(self._model, self._data, jac, subtreeid)
+            self._data.qfrc_applied[:] -=  self._model.opt.gravity * total_mass @ jac
 
             # for i in self.body_ids:
             #     body_weight = self._model.opt.gravity * self._model.body(i).mass
             #     mujoco.mj_jac(self._model, self._data, jac, None, self._data.body(i).xipos, i)
             #     q_weight = jac.T @ body_weight
             #     self._data.qfrc_applied[:] -= q_weight
-
-            subtreeid = 1
-            total_mass = self._model.body_subtreemass[subtreeid]
-            mujoco.mj_jacSubtreeCom(self._model, self._data, jac, subtreeid)
-            self._data.qfrc_applied[:] -=  self._model.opt.gravity * total_mass @ jac
-            
-            # Integrate joint velocities to obtain joint positions.
-            q = self._data.qpos.copy()
-            self._data.ctrl[self._ur5e_ctrl_ids] = q[self._ur5e_dof_ids]
+       
+            # # Integrate joint velocities to obtain joint positions.
+            # q = self._data.qpos.copy()
+            # self._data.ctrl[self._ur5e_ctrl_ids] = q[self._ur5e_dof_ids]
 
             mujoco.mj_step(self._model, self._data)
             
@@ -360,7 +358,7 @@ class PandaPickCubeGymEnv(MujocoGymEnv):
 
 
 if __name__ == "__main__":
-    env = PandaPickCubeGymEnv(render_mode="human")
+    env = ur5ePickCubeGymEnv(render_mode="human")
     env.reset()
     for i in range(100):
         env.step(np.random.uniform(-1, 1, 4))

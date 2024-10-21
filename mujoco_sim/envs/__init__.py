@@ -1,5 +1,5 @@
-from mujoco_sim.envs.panda_pick_gym_env import PandaPickCubeGymEnv
+from mujoco_sim.envs.ur5e_pick_gym_env import ur5ePickCubeGymEnv
 
 __all__ = [
-    "PandaPickCubeGymEnv",
+    "ur5ePickCubeGymEnv",
 ]
