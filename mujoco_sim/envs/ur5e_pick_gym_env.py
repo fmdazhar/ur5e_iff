@@ -246,8 +246,8 @@ class ur5ePickCubeGymEnv(MujocoGymEnv):
                 error_tolerance_pos = 0.001,
                 error_tolerance_ori = 0.001,
                 # damping_ratio=1.0,
-                # max_pos_acceleration=50.0,
-                # max_ori_acceleration=100.0,
+                max_pos_acceleration=2.0,
+                max_ori_acceleration=2.0,
                 # max_angvel = 0.5,
                 control_dt=self.control_dt,
             )
