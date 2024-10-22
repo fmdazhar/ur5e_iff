@@ -242,6 +242,7 @@ class ur5ePickCubeGymEnv(MujocoGymEnv):
                 pos=self._data.mocap_pos[0],
                 ori=self._data.mocap_quat[0],
                 # damping_ratio=1.7678,
+                damping_ratio= 0,
                 error_tolerance_pos = 0.001,
                 error_tolerance_ori = 0.001,
                 # damping_ratio=1.0,

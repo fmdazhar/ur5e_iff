@@ -44,7 +44,7 @@ with mujoco.viewer.launch_passive(m, d, key_callback=key_callback) as viewer:
             step_start = time.time()
 
             # Update the action every 3 seconds
-            if time.time() - last_sample_time >= 3.0:
+            if time.time() - last_sample_time >= 15.0:
                 action = sample()  # Generate a new action sample
                 last_sample_time = time.time()  # Update the last sample time
 
