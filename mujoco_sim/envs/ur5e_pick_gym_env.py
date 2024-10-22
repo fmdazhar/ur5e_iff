@@ -241,7 +241,16 @@ class ur5ePickCubeGymEnv(MujocoGymEnv):
                 dof_ids=self._ur5e_dof_ids,
                 pos=self._data.mocap_pos[0],
                 ori=self._data.mocap_quat[0],
+                damping_ratio=1.7678,
+                error_tolerance_pos = 0.001,
+                error_tolerance_ori = 0.001,
+                # damping_ratio=1.0,
+                # max_pos_acceleration=50.0,
+                # max_ori_acceleration=100.0,
+                # max_angvel = 0.5,
+                control_dt=self.control_dt,
             )
+            # Set the control signal.
             self._data.ctrl[self._ur5e_ctrl_ids] = ctrl
 
             self._data.qfrc_applied[:] = 0.0

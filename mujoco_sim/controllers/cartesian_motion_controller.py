@@ -11,10 +11,19 @@ def pd_control(
     dx: np.ndarray,
     kp_kv: np.ndarray,
     ddx_max: float = 0.0,
+    error_tolerance: float = 0.01,
 ) -> np.ndarray:
     # Compute error.
     x_err = x - x_des
     dx_err = dx
+
+    # Compute the norm of the error.
+    x_err_norm = np.linalg.norm(x_err)
+
+    # Apply error tolerance.
+    if x_err_norm < error_tolerance:
+        x_err = np.zeros_like(x_err)
+        dx_err = np.zeros_like(dx_err)
 
     # Apply gains.
     x_err *= -kp_kv[:, 0]
@@ -36,11 +45,21 @@ def pd_control_orientation(
     w: np.ndarray,
     kp_kv: np.ndarray,
     dw_max: float = 0.0,
+    error_tolerance: float = 0.01,
 ) -> np.ndarray:
     # Compute error.
     quat_err = tr.quat_diff_active(source_quat=quat_des, target_quat=quat)
     ori_err = tr.quat_to_axisangle(quat_err)
     w_err = w
+
+
+    # Compute the norm of the orientation error.
+    ori_err_norm = np.linalg.norm(ori_err)
+
+    # Apply error tolerance.
+    if ori_err_norm < error_tolerance:
+        ori_err = np.zeros_like(ori_err)
+        w_err = np.zeros_like(w_err)
 
     # Apply gains.
     ori_err *= -kp_kv[:, 0]
@@ -55,7 +74,6 @@ def pd_control_orientation(
 
     return ori_err + w_err
 
-
 def cartesain_motion_controller(
     model,
     data,
@@ -63,11 +81,17 @@ def cartesain_motion_controller(
     dof_ids: np.ndarray,
     pos: Optional[np.ndarray] = None,
     ori: Optional[np.ndarray] = None,
+    # pos_gains: Union[Tuple[float, float, float], np.ndarray] = (200.0, 200.0, 200.0),
+    # ori_gains: Union[Tuple[float, float, float], np.ndarray] = (200.0, 200.0, 200.0),
     pos_gains: Union[Tuple[float, float, float], np.ndarray] = (200.0, 200.0, 200.0),
     ori_gains: Union[Tuple[float, float, float], np.ndarray] = (200.0, 200.0, 200.0),
     damping_ratio: float = 1.0,
     max_pos_acceleration: Optional[float] = None,
     max_ori_acceleration: Optional[float] = None,
+    max_angvel: Optional[float] = 0.0,
+    error_tolerance_pos: float = 0.01,
+    error_tolerance_ori: float = 0.01,
+    control_dt: float = 0.002,
 ) -> np.ndarray:
     if pos is None:
         x_des = data.site_xpos[site_id]
@@ -96,7 +120,7 @@ def cartesain_motion_controller(
     dw_max = max_ori_acceleration if max_ori_acceleration is not None else 0.0
 
     # Get current state.
-    q_des = data.qpos[dof_ids]
+    q = data.qpos[dof_ids]
     dq = data.qvel[dof_ids]
 
     # Compute Jacobian of the eef site in world frame.
@@ -122,6 +146,7 @@ def cartesain_motion_controller(
         dx=dx,
         kp_kv=kp_kv_pos,
         ddx_max=ddx_max,
+        error_tolerance=error_tolerance_pos,
     )
 
     # Compute orientation PD control.
@@ -135,28 +160,51 @@ def cartesain_motion_controller(
         w=w,
         kp_kv=kp_kv_ori,
         dw_max=dw_max,
+        error_tolerance=error_tolerance_ori,
     )
-
-    # Compute inertia matrix in joint space.
-    M = np.zeros((model.nv, model.nv), dtype=np.float64)
-    mujoco.mj_fullM(model, M, data.qM)
-    M = M[dof_ids, :][:, dof_ids]
-
-    # Compute inertia matrix in task space.
-    M_inv = np.linalg.inv(M)
-    Mx_inv = J @ M_inv @ J.T
-    if abs(np.linalg.det(Mx_inv)) >= 1e-2:
-        Mx = np.linalg.inv(Mx_inv)
-    else:
-        Mx = np.linalg.pinv(Mx_inv, rcond=1e-2)
 
     # Compute generalized forces.
     ddx_dw = np.concatenate([ddx, dw], axis=0)
+    integration_dt: float = control_dt
 
-    # J_pinv = np.linalg.pinv(J)
-    delta_q = J.T @ Mx @ ddx_dw
+    # # Compute inertia matrix in joint space.
+    # M = np.zeros((model.nv, model.nv), dtype=np.float64)
+    # mujoco.mj_fullM(model, M, data.qM)
+    # M = M[dof_ids, :][:, dof_ids]
 
-    # Compute final joint position command.
-    q_des += delta_q
+    # # Compute inertia matrix in task space.
+    # M_inv = np.linalg.inv(M)
+    # Mx_inv = J @ M_inv @ J.T
+    # if abs(np.linalg.det(Mx_inv)) >= 1e-2:
+    #     Mx = np.linalg.inv(Mx_inv)
+    # else:
+    #     Mx = np.linalg.pinv(Mx_inv, rcond=1e-2)
 
-    return q_des
+    # # Compute joint accelerations according to: \f$ \ddot{q} = H^{-1} ( J^T f) \f$
+    # delta = J.T @ Mx @ ddx_dw
+
+    # # If delta contains joint accelerations, integrate them into joint velocities first
+    # dq += delta * integration_dt
+
+    # Solve system of equations: J @ dq = error.
+    # Damping term for the pseudoinverse. This is used to prevent joint velocities from
+    # becoming too large when the Jacobian is close to singular.
+    damping: float = 1e-4
+    diag = damping * np.eye(6)
+    dq = J.T @ np.linalg.solve(J @ J.T + diag, ddx_dw)
+
+    # Scale down joint velocities if they exceed maximum.
+    if max_angvel > 0:
+        dq_abs_max = np.abs(dq).max()
+        if dq_abs_max > max_angvel:
+            dq *= max_angvel / dq_abs_max
+
+    # Update the joint positions.
+    q += dq * integration_dt
+
+    # Clip the control signal to be within the joint limits.
+    q_min = model.jnt_range[:6, 0]  # Minimum joint limits for the first 6 joints
+    q_max = model.jnt_range[:6, 1]  # Maximum joint limits for the first 6 joints
+    np.clip(q, q_min, q_max, out=q)
+
+    return q
