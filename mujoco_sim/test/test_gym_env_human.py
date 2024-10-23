@@ -6,7 +6,7 @@ import numpy as np
 
 from mujoco_sim import envs
 
-env = envs.ur5ePickCubeGymEnv(action_scale=(0.1, 1))
+env = envs.ur5ePickCubeGymEnv(action_scale=(0.001, 1))
 action_spec = env.action_space
 
 
@@ -44,7 +44,7 @@ with mujoco.viewer.launch_passive(m, d, key_callback=key_callback) as viewer:
             step_start = time.time()
 
             # Update the action every 3 seconds
-            if time.time() - last_sample_time >= 15.0:
+            if time.time() - last_sample_time >= 5.0:
                 action = sample()  # Generate a new action sample
                 last_sample_time = time.time()  # Update the last sample time
 

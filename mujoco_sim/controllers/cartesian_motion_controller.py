@@ -10,6 +10,7 @@ def pd_control(
     x_des: np.ndarray,
     dx: np.ndarray,
     kp_kv: np.ndarray,
+    time_step,
     ddx_max: float = 0.0,
     error_tolerance: float = 0.01,
 ) -> np.ndarray:
@@ -26,7 +27,7 @@ def pd_control(
         dx_err = np.zeros_like(dx_err)
 
     # Apply gains.
-    x_err *= -kp_kv[:, 0]
+    x_err *= -kp_kv[:, 0] / time_step
     dx_err *= -kp_kv[:, 1]
 
     # Limit maximum error.
@@ -44,6 +45,7 @@ def pd_control_orientation(
     quat_des: np.ndarray,
     w: np.ndarray,
     kp_kv: np.ndarray,
+    time_step,
     dw_max: float = 0.0,
     error_tolerance: float = 0.01,
 ) -> np.ndarray:
@@ -62,7 +64,7 @@ def pd_control_orientation(
         w_err = np.zeros_like(w_err)
 
     # Apply gains.
-    ori_err *= -kp_kv[:, 0] 
+    ori_err *= -kp_kv[:, 0] / time_step
     w_err *= -kp_kv[:, 1] 
 
     # Limit maximum error.
@@ -78,20 +80,20 @@ def cartesain_motion_controller(
     model,
     data,
     site_id,
+    integration_dt,
     dof_ids: np.ndarray,
     pos: Optional[np.ndarray] = None,
     ori: Optional[np.ndarray] = None,
-    # pos_gains: Union[Tuple[float, float, float], np.ndarray] = (200.0, 200.0, 200.0),
-    # ori_gains: Union[Tuple[float, float, float], np.ndarray] = (200.0, 200.0, 200.0),
+    # pos_gains: Union[Tuple[float, float, float], np.ndarray] = (100000.0, 100000.0, 100000.0),
+    # ori_gains: Union[Tuple[float, float, float], np.ndarray] = (50000.0, 50000.0, 50000.0),
     pos_gains: Union[Tuple[float, float, float], np.ndarray] = (1, 1, 1),
     ori_gains: Union[Tuple[float, float, float], np.ndarray] = (1, 1, 1),
-    damping_ratio: float = 0.0,
+    damping_ratio: float = 1.0,
     max_pos_acceleration: Optional[float] = None,
     max_ori_acceleration: Optional[float] = None,
     max_angvel: Optional[float] = 0.0,
     error_tolerance_pos: float = 0.01,
     error_tolerance_ori: float = 0.01,
-    control_dt: float = 0.02,
 ) -> np.ndarray:
     if pos is None:
         x_des = data.site_xpos[site_id]
@@ -118,6 +120,7 @@ def cartesain_motion_controller(
 
     ddx_max = max_pos_acceleration if max_pos_acceleration is not None else 0.0
     dw_max = max_ori_acceleration if max_ori_acceleration is not None else 0.0
+
 
     # Get current state.
     q = data.qpos[dof_ids]
@@ -147,6 +150,7 @@ def cartesain_motion_controller(
         kp_kv=kp_kv_pos,
         ddx_max=ddx_max,
         error_tolerance=error_tolerance_pos,
+        time_step= integration_dt,
     )
 
     # Compute orientation PD control.
@@ -161,6 +165,7 @@ def cartesain_motion_controller(
         kp_kv=kp_kv_ori,
         dw_max=dw_max,
         error_tolerance=error_tolerance_ori,
+        time_step= integration_dt,
     )
 
     # Compute generalized forces.
@@ -171,17 +176,23 @@ def cartesain_motion_controller(
     mujoco.mj_fullM(model, M, data.qM)
     M = M[dof_ids, :][:, dof_ids]
 
-    # # Compute inertia matrix in task space.
-    # M_inv = np.linalg.inv(M)
-    # Mx_inv = J @ M_inv @ J.T
-    # if abs(np.linalg.det(Mx_inv)) >= 1e-2:
-    #     Mx = np.linalg.inv(Mx_inv)
-    # else:
-    #     Mx = np.linalg.pinv(Mx_inv, rcond=1e-2)
+    # Compute inertia matrix in task space.
+    M_inv = np.linalg.inv(M)
+    Mx_inv = J @ M_inv @ J.T
+    if abs(np.linalg.det(Mx_inv)) >= 1e-2:
+        Mx = np.linalg.inv(Mx_inv)
+    else:
+        Mx = np.linalg.pinv(Mx_inv, rcond=1e-2)
+
 
     # # Compute joint accelerations according to: \f$ \ddot{q} = H^{-1} ( J^T f) \f$
     # ddq = M_inv @ J.T @ ddx_dw
-    # dq += ddq * 0.9 * control_dt
+
+    # # Update the joint velocities.
+    # dq += ddq * integration_dt
+
+    # # Update the joint positions.
+    # q += dq * integration_dt
 
     # Solve system of equations: J @ dq = error.
     # Damping term for the pseudoinverse. This is used to prevent joint velocities from
@@ -190,14 +201,8 @@ def cartesain_motion_controller(
     diag = damping * np.eye(6)
     dq = J.T @ np.linalg.solve(J @ J.T + diag, ddx_dw)
 
-    # Scale down joint velocities if they exceed maximum.
-    if max_angvel > 0:
-        dq_abs_max = np.abs(dq).max()
-        if dq_abs_max > max_angvel:
-            dq *= max_angvel / dq_abs_max
-
     # Update the joint positions.
-    q += dq
+    q += dq * integration_dt
 
     # Clip the control signal to be within the joint limits.
     q_min = model.jnt_range[:6, 0]  # Minimum joint limits for the first 6 joints

@@ -83,7 +83,6 @@
   </asset>
 
   <worldbody>
-    <!-- Define a transparent box representing the Cartesian bounds -->
     <geom
       name="cartesian_bounds"
       type="box"
