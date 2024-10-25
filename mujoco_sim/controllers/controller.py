@@ -16,7 +16,9 @@ class Controller:
         self.model = model
         self.data = data
         self.site_id = site_id
-        self.integration_dt = integration_dt
+        # self.integration_dt = integration_dt
+        self.integration_dt = 0.2
+
         self.dof_ids = dof_ids
 
         # Default parameters
@@ -101,7 +103,7 @@ class Controller:
 
     def compute_gains(self, gains, kd_values, method: str):
         if method == "dynamics":
-            kp = np.asarray(gains) / self.integration_dt
+            kp = np.asarray(gains)
             if kd_values is None:
                 kd = self.damping_ratio * 2 * np.sqrt(kp)
             else:
@@ -109,7 +111,7 @@ class Controller:
         else:
             kp = np.asarray(gains)
             if kd_values is None:
-                kd = self.damping_ratio * 2 * np.sqrt(kp)
+                kd = self.damping_ratio * kp * self.integration_dt
             else:
                 kd = np.asarray(kd_values)
 
@@ -172,7 +174,7 @@ class Controller:
             #     Mx = np.linalg.pinv(Mx_inv, rcond=1e-2)
 
             ddq = M_inv @ J.T @ error
-            dq += ddq * self.integration_dt
+            dq += ddq * self.integration_dt * 0.9
             q += dq * self.integration_dt
         elif self.method == "pinv":
             J_pinv = np.linalg.pinv(J)

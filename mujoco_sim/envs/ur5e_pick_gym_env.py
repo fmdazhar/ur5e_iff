@@ -234,10 +234,10 @@ class ur5ePickCubeGymEnv(MujocoGymEnv):
         npos = np.clip(pos + dpos, *_CARTESIAN_BOUNDS)
         self._data.mocap_pos[0] = npos
 
-        # Set mocap orientation using quaternion
-        nori = np.asarray([qx, qy, qz, qw])
-        nori = nori / np.linalg.norm(nori)  # Normalize the quaternion
-        self._data.mocap_quat[0] = nori
+        # # Set mocap orientation using quaternion
+        # nori = np.asarray([qx, qy, qz, qw])
+        # nori = nori / np.linalg.norm(nori)  # Normalize the quaternion
+        # self._data.mocap_quat[0] = nori
 
 
         # Set gripper grasp.
