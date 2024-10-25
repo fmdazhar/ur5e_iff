@@ -6,9 +6,27 @@ import numpy as np
 
 from mujoco_sim import envs
 
-env = envs.ur5ePickCubeGymEnv(action_scale=(0.001, 1))
+env = envs.ur5ePickCubeGymEnv(action_scale=(1, 1))
 action_spec = env.action_space
+controller = env.controller
 
+# Dynamically change parameters in main function
+controller.set_parameters(
+    damping_ratio= 1,
+    error_tolerance_pos=0.01,
+    error_tolerance_ori=0.01,
+    # max_pos_error=2000.0,
+    # max_ori_error=2000.0,
+    pos_gains=(0.5, 0.5, 0.5),
+    ori_gains=(0.5, 0.5, 0.5),
+    # pos_gains=(0.1, 0.1, 0.1),
+    # ori_gains=(0.05, 0.05, 0.05),
+    # pos_gains=(0.25, 0.25, 0.25),
+    # ori_gains=(0.25, 0.25, 0.25),
+    # pos_kd=(0.05, 0.05, 0.05),
+    # ori_kd=(0.05, 0.05, 0.05),
+    method="dls"
+)
 
 def sample():
     a = np.random.uniform(action_spec.low, action_spec.high, action_spec.shape)
@@ -44,11 +62,12 @@ with mujoco.viewer.launch_passive(m, d, key_callback=key_callback) as viewer:
             step_start = time.time()
 
             # Update the action every 3 seconds
-            if time.time() - last_sample_time >= 5.0:
+            if time.time() - last_sample_time >= 1.0:
                 action = sample()  # Generate a new action sample
                 last_sample_time = time.time()  # Update the last sample time
 
             env.step(action)
+
             viewer.sync()
             time_until_next_step = env.control_dt - (time.time() - step_start)
             if time_until_next_step > 0:

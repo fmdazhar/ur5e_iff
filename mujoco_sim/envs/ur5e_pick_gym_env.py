@@ -13,7 +13,7 @@ except ImportError as e:
 else:
     MUJOCO_PY_IMPORT_ERROR = None
 
-from mujoco_sim.controllers import cartesain_motion_controller
+from mujoco_sim.controllers import Controller
 from mujoco_sim.mujoco_gym_env import GymRenderingSpec, MujocoGymEnv
 
 _HERE = Path(__file__).parent
@@ -99,6 +99,14 @@ class ur5ePickCubeGymEnv(MujocoGymEnv):
         # print(self._pinch_site_id)
         self._block_z = self._model.geom("block").size[2]
 
+        self.controller = Controller(
+        model=self._model,
+        data=self._data,
+        site_id=self._pinch_site_id,
+        integration_dt=self.physics_dt,
+        dof_ids=self._ur5e_dof_ids,
+        )
+
         self.observation_space = gym.spaces.Dict(
             {
                 "state": gym.spaces.Dict(
@@ -160,13 +168,12 @@ class ur5ePickCubeGymEnv(MujocoGymEnv):
             )
 
         self.action_space = gym.spaces.Box(
-            low=np.asarray([-1.0, -1.0, -1.0, -1.0]),
-            high=np.asarray([1.0, 1.0, 1.0, 1.0]),
+            low=np.asarray([-1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0]),
+            high=np.asarray([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]),
             dtype=np.float32,
         )
 
-        # NOTE: gymnasium is used here since MujocoRenderer is not available in gym. It
-        # is possible to add a similar viewer feature with gym, but that can be a future TODO
+
         from gymnasium.envs.mujoco.mujoco_rendering import MujocoRenderer
 
         self._viewer = MujocoRenderer(
@@ -219,13 +226,19 @@ class ur5ePickCubeGymEnv(MujocoGymEnv):
             truncated: bool,
             info: dict[str, Any]
         """
-        x, y, z, grasp = action
+        x, y, z, grasp, qx, qy, qz, qw = action  # 4 elements for the quaternion (qx, qy, qz, qw)
 
         # Set the mocap position.
         pos = self._data.mocap_pos[0].copy()
         dpos = np.asarray([x, y, z]) * self._action_scale[0]
         npos = np.clip(pos + dpos, *_CARTESIAN_BOUNDS)
         self._data.mocap_pos[0] = npos
+
+        # Set mocap orientation using quaternion
+        nori = np.asarray([qx, qy, qz, qw])
+        nori = nori / np.linalg.norm(nori)  # Normalize the quaternion
+        self._data.mocap_quat[0] = nori
+
 
         # Set gripper grasp.
         g = self._data.ctrl[self._gripper_ctrl_id] / 255
@@ -234,22 +247,10 @@ class ur5ePickCubeGymEnv(MujocoGymEnv):
         self._data.ctrl[self._gripper_ctrl_id] = ng * 255
 
         for _ in range(self._n_substeps):
-            ctrl = cartesain_motion_controller(
-                model=self._model,
-                data=self._data,
-                site_id=self._pinch_site_id,
-                dof_ids=self._ur5e_dof_ids,
+
+            ctrl = self.controller.control(
                 pos=self._data.mocap_pos[0],
-                ori=self._data.mocap_quat[0],
-                # damping_ratio=1.7678,
-                # damping_ratio=0.0,
-                # damping_ratio= 0,
-                error_tolerance_pos = 0.001,
-                error_tolerance_ori = 0.001,
-                # max_pos_acceleration=2.0,
-                # max_ori_acceleration=2.0,
-                # max_angvel = 0.5,
-                integration_dt=self.physics_dt,
+                ori=self._data.mocap_quat[0]
             )
             # Set the control signal.
             self._data.ctrl[self._ur5e_ctrl_ids] = ctrl

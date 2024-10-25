@@ -17,6 +17,23 @@
     <!-- <texture name="grid" type="2d" builtin="checker" width="512" height="512" rgb1="0 0 0" rgb2="0 0 0"/> -->
     <material name="grid" texture="grid" texrepeat="2 2" texuniform="true" reflectance="0"/>
   </asset>
+  <asset>
+  
+  <!-- Define a material for the boundary visualization -->
+  <material name="boundary_material" rgba="1 0 0 0.3" />
+  </asset>
+
+  <worldbody>
+    <geom
+      name="cartesian_bounds"
+      type="box"
+      size="0.2 0.3 0.25"
+      pos="0.4 0 0.25"
+      material="boundary_material"
+      contype="0"
+      conaffinity="0"
+      rgba="1 0 0 0.1" />
+  </worldbody>
 
   <worldbody>
     <camera name="front" pos="1.3 0.0 0.7" quat="0.5963678 0.3799282 0.3799282 0.5963678" fovy="45"/>
