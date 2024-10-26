@@ -1,10 +1,14 @@
 import time
-
 import mujoco
 import mujoco.viewer
 import numpy as np
+import glfw
 
 from mujoco_sim import envs
+from mujoco_sim.utils.viz import SliderController
+
+# glfw init
+glfw.init()
 
 env = envs.ur5ePickCubeGymEnv(action_scale=(1, 1))
 action_spec = env.action_space
@@ -51,6 +55,7 @@ def key_callback(keycode):
 
 
 env.reset()
+start_time = time.time()
 with mujoco.viewer.launch_passive(m, d, key_callback=key_callback) as viewer:
     start = time.time()
     while viewer.is_running():
@@ -68,8 +73,8 @@ with mujoco.viewer.launch_passive(m, d, key_callback=key_callback) as viewer:
                 last_sample_time = time.time()  # Update the last sample time
 
             env.step(action)
-
             viewer.sync()
+
             time_until_next_step = env.control_dt - (time.time() - step_start)
             if time_until_next_step > 0:
                 time.sleep(time_until_next_step)
