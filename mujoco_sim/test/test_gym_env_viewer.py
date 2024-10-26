@@ -1,6 +1,6 @@
 import time
 import mujoco
-import mujoco_viewer
+from mujoco_sim.viewer.mujoco_viewer import MujocoViewer
 import numpy as np
 
 from mujoco_sim import envs
@@ -38,7 +38,7 @@ last_sample_time = time.time()
 
 # Reset the environment
 env.reset()
-viewer = mujoco_viewer.MujocoViewer(m, d, hide_menus=True)
+viewer = MujocoViewer(m, d, hide_menus=True)
 
 # Define indices for UR5e DOF and gripper
 ur5e_dof_indices = env._ur5e_dof_ids
