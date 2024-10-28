@@ -21,7 +21,7 @@ from mujoco_sim.mujoco_gym_env import GymRenderingSpec, MujocoGymEnv
 _HERE = Path(__file__).parent
 _XML_PATH = _HERE / "xmls" / "ur5e_arena.xml"
 _UR5E_HOME = np.asarray((-1.5708, -1.5708, 1.5708, -1.5708, -1.5708, 0)) # UR5e home position
-_CARTESIAN_BOUNDS = np.asarray([[0.2, -0.3, 0], [0.5, 0.3, 0.5]])
+_CARTESIAN_BOUNDS = np.asarray([[0.2, -0.3, 0.3], [0.4, 0.3, 0.5]])
 _SAMPLING_BOUNDS = np.asarray([[0.25, -0.25], [0.55, 0.25]])
 
 
@@ -105,7 +105,7 @@ class ur5ePickCubeGymEnv(MujocoGymEnv):
         model=self._model,
         data=self._data,
         site_id=self._pinch_site_id,
-        integration_dt=self.physics_dt,
+        integration_dt= 0.225,
         dof_ids=self._ur5e_dof_ids,
         )
 
@@ -236,10 +236,10 @@ class ur5ePickCubeGymEnv(MujocoGymEnv):
         npos = np.clip(pos + dpos, *_CARTESIAN_BOUNDS)
         self._data.mocap_pos[0] = npos
 
-        # # Set mocap orientation using quaternion
-        # nori = np.asarray([qx, qy, qz, qw])
-        # nori = nori / np.linalg.norm(nori)  # Normalize the quaternion
-        # self._data.mocap_quat[0] = nori
+        # Set mocap orientation using quaternion
+        nori = np.asarray([qx, qy, qz, qw])
+        nori = nori / np.linalg.norm(nori)  # Normalize the quaternion
+        self._data.mocap_quat[0] = nori
 
 
         # Set gripper grasp.

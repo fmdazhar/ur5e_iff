@@ -18,6 +18,13 @@ class SliderController:
         x_offset = screen_width - window_width - 50
         self.root.geometry(f"{window_width}x{window_height}+{x_offset}+50")
 
+        self.method_var = tk.StringVar(value=self.controller.method)
+        method_selector = ttk.Combobox(self.root, textvariable=self.method_var, values=["dynamics", "pinv", "svd", "trans", "dls"], font=large_font)
+        method_selector.bind("<<ComboboxSelected>>", self.update_method)
+        method_selector.pack(pady=20)
+
+        self.integration_dt_slider = self.create_rescalable_slider("Integration DT", 0, 1, 0.001, self.controller.integration_dt, self.update_integration_dt)
+
         self.pos_gains_master_slider = self.create_rescalable_slider("Master Pos Gains", 0, 10, 0.1, self.controller.pos_gains[0], self.update_pos_gains_master)
         
         self.pos_gains_sliders = [
@@ -37,12 +44,8 @@ class SliderController:
         self.error_tolerance_ori_slider = self.create_rescalable_slider("Error Tolerance Ori", 0, 0.1, 0.001, self.controller.error_tolerance_ori, self.update_error_tolerance_ori)
         self.max_pos_error_slider = self.create_rescalable_slider("Max Pos Error", 0, 5, 0.1, self.controller.max_pos_error or 0, self.update_max_pos_error)
         self.max_ori_error_slider = self.create_rescalable_slider("Max Ori Error", 0, 5, 0.1, self.controller.max_ori_error or 0, self.update_max_ori_error)
-        self.integration_dt_slider = self.create_rescalable_slider("Integration DT", 0, 1, 0.01, self.controller.integration_dt, self.update_integration_dt)
         
-        self.method_var = tk.StringVar(value=self.controller.method)
-        method_selector = ttk.Combobox(self.root, textvariable=self.method_var, values=["dynamics", "pinv", "svd", "trans", "dls"], font=large_font)
-        method_selector.bind("<<ComboboxSelected>>", self.update_method)
-        method_selector.pack(pady=20)
+
 
     def create_rescalable_slider(self, label, from_, to, resolution, initial, command):
         slider = tk.Scale(self.root, from_=from_, to=to, resolution=resolution, label=label,

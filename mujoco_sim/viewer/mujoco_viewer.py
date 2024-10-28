@@ -444,21 +444,35 @@ class MujocoViewer(Callbacks):
                         self.ctx)
 
                 if not self._hide_graph:
-
+                    # Adjust plot placement: first column on the left, second column on the right
+                    max_rows = height // (height // 4)  # Max number of plots in one column
                     for idx, fig in enumerate(self.figs):
-                        max_rows = height // (height // 4)  # Max number of plots in one column
-                        col_idx = idx // max_rows            # Current column index (0 or 1)
-                        row_idx = idx % max_rows             # Current row index within the column
+                        col_idx = 0 if idx < max_rows else 1  # Use index for the right column after filling left column
+                        row_idx = idx % max_rows              # Row within the column
 
                         # Adjust x and y based on the column and row
-                        x = col_idx * (width // 4)           # Move to the next column if needed
-                        y = row_idx * (height // 4)          # Bottom-to-top placement
+                        x = col_idx * (3 * width // 4)        # Left side or far-right
+                        y = row_idx * (height // 4)           # Bottom-to-top placement
 
                         viewport = mujoco.MjrRect(x, y, width // 4, height // 4)
 
                         has_lines = len([i for i in fig.linename if i != b''])
                         if has_lines:
                             mujoco.mjr_figure(viewport, fig, self.ctx)
+                    # for idx, fig in enumerate(self.figs):
+                    #     max_rows = height // (height // 4)  # Max number of plots in one column
+                    #     col_idx = idx // max_rows            # Current column index (0 or 1)
+                    #     row_idx = idx % max_rows             # Current row index within the column
+
+                    #     # Adjust x and y based on the column and row
+                    #     x = col_idx * (width // 4)           # Move to the next column if needed
+                    #     y = row_idx * (height // 4)          # Bottom-to-top placement
+
+                    #     viewport = mujoco.MjrRect(x, y, width // 4, height // 4)
+
+                    #     has_lines = len([i for i in fig.linename if i != b''])
+                    #     if has_lines:
+                    #         mujoco.mjr_figure(viewport, fig, self.ctx)
 
                     # for idx, fig in enumerate(self.figs):
                     #     width_adjustment = width % 4

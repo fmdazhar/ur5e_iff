@@ -16,20 +16,18 @@ class Controller:
         self.model = model
         self.data = data
         self.site_id = site_id
-        # self.integration_dt = integration_dt
-        self.integration_dt = 0.2
-
+        self.integration_dt = integration_dt if integration_dt is not None else model.opt.timestep
         self.dof_ids = dof_ids
 
         # Default parameters
-        self.damping_ratio = 1
+        self.damping_ratio = 1.0
         self.error_tolerance_pos = 0.01
         self.error_tolerance_ori = 0.01
         self.max_pos_error = None
         self.max_ori_error = None
-        self.method = "dls"
+        self.method = "dynamics"
         self.pos_gains = (0.5, 0.5, 0.5)
-        self.ori_gains = (0.5, 0.5, 0.5)
+        self.ori_gains = (0.25, 0.25, 0.25)
         self.pos_kd = None
         self.ori_kd = None
 
@@ -71,6 +69,10 @@ class Controller:
 
         x_err *= -kp_kv[:, 0]
         dx_err *= -kp_kv[:, 1]
+
+        # Print the position error and velocity error for debugging
+        print("Position Error (x_err):", x_err)
+        print("Velocity Error (dx_err):", dx_err)
 
         if ddx_max > 0.0:
             x_err_sq_norm = np.sum(x_err**2)
@@ -172,10 +174,13 @@ class Controller:
             #     Mx = np.linalg.inv(Mx_inv)
             # else:
             #     Mx = np.linalg.pinv(Mx_inv, rcond=1e-2)
-
             ddq = M_inv @ J.T @ error
-            dq += ddq * self.integration_dt * 0.9
+            dq += ddq * self.integration_dt
+            # print("Error:", error)
+            print("Acceleration (ddq):", ddq)
+            # print("velocity:", dq)
             q += dq * self.integration_dt
+
         elif self.method == "pinv":
             J_pinv = np.linalg.pinv(J)
             dq = J_pinv @ error

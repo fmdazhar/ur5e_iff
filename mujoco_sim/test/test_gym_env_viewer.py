@@ -16,10 +16,10 @@ slider_controller = SliderController(controller)
 
 # Set controller parameters dynamically
 controller.set_parameters(
-    damping_ratio=1,
+    damping_ratio=1.5,
     error_tolerance_pos=0.01,
     error_tolerance_ori=0.01,
-    pos_gains=(1, 1, 1),
+    pos_gains=(0.5, 0.5, 0.5),
     ori_gains=(0.5, 0.5, 0.5),
     method="dls"
 )
@@ -56,7 +56,7 @@ fig0.xlabel = "Timesteps"
 fig0.flg_legend = True
 fig0.figurergba[0] = 0.2
 fig0.figurergba[3] = 0.2
-fig0.gridsize[0] = 5
+fig0.gridsize[0] = 10
 fig0.gridsize[1] = 5
 
 # Set up distinct colors for each axis in the target and current position lines
@@ -77,13 +77,18 @@ fig1.figurergba[3] = 0.2
 fig1.gridsize[0] = 5
 fig1.gridsize[1] = 5
 
-# Figure 2: TCP Velocity
-viewer.add_line_to_fig(line_name="tcp_vel_x", fig_idx=2, color=[0.8, 0.1, 0.1])  # Red
-viewer.add_line_to_fig(line_name="tcp_vel_y", fig_idx=2, color=[0.1, 0.8, 0.1])  # Green
-viewer.add_line_to_fig(line_name="tcp_vel_z", fig_idx=2, color=[0.1, 0.1, 0.8])  # Blue
+# Add a new figure for orientation tracking
+# Figure 2: End-Effector Orientation Tracking
+viewer.add_line_to_fig(line_name="target_ori_x", fig_idx=2, color=[0.85, 0.3, 0])  # Dark Orange
+viewer.add_line_to_fig(line_name="target_ori_y", fig_idx=2, color=[0.2, 0.6, 0.2])  # Dark Green
+viewer.add_line_to_fig(line_name="target_ori_z", fig_idx=2, color=[0.2, 0.4, 0.8])  # Deep Blue
+
+viewer.add_line_to_fig(line_name="current_ori_x", fig_idx=2, color=[1, 0.5, 0.2])  # Light Orange
+viewer.add_line_to_fig(line_name="current_ori_y", fig_idx=2, color=[0.4, 0.9, 0.4])  # Light Green
+viewer.add_line_to_fig(line_name="current_ori_z", fig_idx=2, color=[0.3, 0.6, 1])  # Lighter Blue
 
 fig2 = viewer.figs[2]
-fig2.title = "TCP Velocity"
+fig2.title = "End-Effector Orientation Tracking"
 fig2.xlabel = "Timesteps"
 fig2.flg_legend = True
 fig2.figurergba[0] = 0.2
@@ -130,6 +135,21 @@ fig5.figurergba[0] = 0.2
 fig5.figurergba[3] = 0.2
 fig5.gridsize[0] = 5
 fig5.gridsize[1] = 5
+
+
+# Figure 6: TCP Velocity
+viewer.add_line_to_fig(line_name="tcp_vel_x", fig_idx=6, color=[0.8, 0.1, 0.1])  # Red
+viewer.add_line_to_fig(line_name="tcp_vel_y", fig_idx=6, color=[0.1, 0.8, 0.1])  # Green
+viewer.add_line_to_fig(line_name="tcp_vel_z", fig_idx=6, color=[0.1, 0.1, 0.8])  # Blue
+
+fig6 = viewer.figs[6]
+fig6.title = "TCP Velocity"
+fig6.xlabel = "Timesteps"
+fig6.flg_legend = True
+fig6.figurergba[0] = 0.2
+fig6.figurergba[3] = 0.2
+fig6.gridsize[0] = 5
+fig6.gridsize[1] = 5
 
 # Main simulation loop
 while viewer.is_alive:
@@ -178,11 +198,20 @@ while viewer.is_alive:
         viewer.add_data_to_line(line_name="current_y", line_data=tcp_pos[1], fig_idx=1)
         viewer.add_data_to_line(line_name="current_z", line_data=tcp_pos[2], fig_idx=1)
 
-        # Update TCP velocity lines
-        tcp_vel = d.sensor("hande/pinch_vel").data
-        viewer.add_data_to_line(line_name="tcp_vel_x", line_data=tcp_vel[0], fig_idx=2)
-        viewer.add_data_to_line(line_name="tcp_vel_y", line_data=tcp_vel[1], fig_idx=2)
-        viewer.add_data_to_line(line_name="tcp_vel_z", line_data=tcp_vel[2], fig_idx=2)
+        # Update target and current orientation lines
+        target_quat = d.mocap_quat[0]
+        current_rot_mat = d.site_xmat[controller.site_id].reshape(3, 3)
+        
+        target_euler = tr.quat_to_axisangle(target_quat)
+        current_euler = tr.rmat_to_axisangle(current_rot_mat)
+
+        viewer.add_data_to_line(line_name="target_ori_x", line_data=target_euler[0], fig_idx=2)
+        viewer.add_data_to_line(line_name="target_ori_y", line_data=target_euler[1], fig_idx=2)
+        viewer.add_data_to_line(line_name="target_ori_z", line_data=target_euler[2], fig_idx=2)
+
+        viewer.add_data_to_line(line_name="current_ori_x", line_data=current_euler[0], fig_idx=2)
+        viewer.add_data_to_line(line_name="current_ori_y", line_data=current_euler[1], fig_idx=2)
+        viewer.add_data_to_line(line_name="current_ori_z", line_data=current_euler[2], fig_idx=2)
 
         # Update Joint Velocity lines
         for joint_idx in ur5e_dof_indices:
@@ -197,6 +226,12 @@ while viewer.is_alive:
         viewer.add_data_to_line(line_name="wrist_force_x", line_data=wrist_force[0], fig_idx=5)
         viewer.add_data_to_line(line_name="wrist_force_y", line_data=wrist_force[1], fig_idx=5)
         viewer.add_data_to_line(line_name="wrist_force_z", line_data=wrist_force[2], fig_idx=5)
+
+        # Update TCP velocity lines
+        tcp_vel = d.sensor("hande/pinch_vel").data
+        viewer.add_data_to_line(line_name="tcp_vel_x", line_data=tcp_vel[0], fig_idx=6)
+        viewer.add_data_to_line(line_name="tcp_vel_y", line_data=tcp_vel[1], fig_idx=6)
+        viewer.add_data_to_line(line_name="tcp_vel_z", line_data=tcp_vel[2], fig_idx=6)
 
         viewer.render()
 
