@@ -5,7 +5,6 @@ import gym
 import mujoco
 import numpy as np
 from gym import spaces
-from dm_robotics.transformations import transformations as tr
 
 
 try:
@@ -236,13 +235,13 @@ class ur5ePickCubeGymEnv(MujocoGymEnv):
         npos = np.clip(pos + dpos, *_CARTESIAN_BOUNDS)
         self._data.mocap_pos[0] = npos
 
-        # # Set mocap orientation using quaternion
-        # nori = np.asarray([qx, qy, qz, qw])
-        # nori = nori / np.linalg.norm(nori)  # Normalize the quaternion
-        # # Apply constraint to prevent upward-facing orientation
-        # nori[2] = min(nori[2], 0.4)
-        # nori /= np.linalg.norm(nori)  # Ensure initial normalization
-        # self._data.mocap_quat[0] = nori
+        # Set mocap orientation using quaternion
+        nori = np.asarray([qx, qy, qz, qw])
+        nori = nori / np.linalg.norm(nori)  # Normalize the quaternion
+        # Apply constraint to prevent upward-facing orientation
+        nori[2] = min(nori[2], 0.4)
+        nori /= np.linalg.norm(nori)  # Ensure initial normalization
+        self._data.mocap_quat[0] = nori
         
         # Set gripper grasp.
         g = self._data.ctrl[self._gripper_ctrl_id] / 255
@@ -253,8 +252,8 @@ class ur5ePickCubeGymEnv(MujocoGymEnv):
         for _ in range(self._n_substeps):
 
             ctrl = self.controller.control(
-                pos=self._data.mocap_pos[0],
-                ori=self._data.mocap_quat[0]
+                pos=self._data.mocap_pos[0].copy(),
+                ori=self._data.mocap_quat[0].copy(),
             )
             
             # Set the control signal.

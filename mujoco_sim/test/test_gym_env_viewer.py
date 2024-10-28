@@ -5,14 +5,12 @@ import numpy as np
 
 from mujoco_sim import envs
 from mujoco_sim.utils.viz import SliderController
-from dm_robotics.transformations import transformations as tr
 
 
 # Initialize the environment and controller
 env = envs.ur5ePickCubeGymEnv(action_scale=(1, 1))
 action_spec = env.action_space
 controller = env.controller
-slider_controller = SliderController(controller)
 
 # # Set controller parameters dynamically
 # controller.set_parameters(
@@ -23,6 +21,8 @@ slider_controller = SliderController(controller)
 #     ori_gains=(0.5, 0.5, 0.5),
 #     method="dls"
 # )
+
+slider_controller = SliderController(controller)
 
 # Sample a random action within the action space
 def sample():
@@ -172,7 +172,10 @@ while viewer.is_alive:
         # Add marker at mocap position
         mocap_pos = d.mocap_pos[0]
         tcp_pos = d.site_xpos[controller.site_id]
-        rotation_matrix = tr.quat_to_mat(d.mocap_quat[0])[:3, :3]
+        rotation_matrix = np.zeros(9, dtype=np.float64)
+        mujoco.mju_quat2Mat(rotation_matrix, d.mocap_quat[0])
+        # Reshape rotation_matrix to a 3x3 matrix after conversion
+        rotation_matrix = rotation_matrix.reshape((3, 3))
 
         viewer.add_marker(
             pos=mocap_pos,
@@ -200,18 +203,22 @@ while viewer.is_alive:
 
         # Update target and current orientation lines
         target_quat = d.mocap_quat[0]
-        current_rot_mat = d.site_xmat[controller.site_id].reshape(3, 3)
+        current_rot_mat = d.site_xmat[controller.site_id]
         
-        target_euler = tr.quat_to_axisangle(target_quat)
-        current_euler = tr.rmat_to_axisangle(current_rot_mat)
+        target = np.zeros(3)
+        mujoco.mju_quat2Vel(target, target_quat, 1)
+        current = np.zeros(3)
+        site_quat = np.zeros(4)
+        mujoco.mju_mat2Quat(site_quat, current_rot_mat)
+        mujoco.mju_quat2Vel(current, site_quat, 1)
 
-        viewer.add_data_to_line(line_name="target_ori_x", line_data=target_euler[0], fig_idx=2)
-        viewer.add_data_to_line(line_name="target_ori_y", line_data=target_euler[1], fig_idx=2)
-        viewer.add_data_to_line(line_name="target_ori_z", line_data=target_euler[2], fig_idx=2)
+        viewer.add_data_to_line(line_name="target_ori_x", line_data=target[0], fig_idx=2)
+        viewer.add_data_to_line(line_name="target_ori_y", line_data=target[1], fig_idx=2)
+        viewer.add_data_to_line(line_name="target_ori_z", line_data=target[2], fig_idx=2)
 
-        viewer.add_data_to_line(line_name="current_ori_x", line_data=current_euler[0], fig_idx=2)
-        viewer.add_data_to_line(line_name="current_ori_y", line_data=current_euler[1], fig_idx=2)
-        viewer.add_data_to_line(line_name="current_ori_z", line_data=current_euler[2], fig_idx=2)
+        viewer.add_data_to_line(line_name="current_ori_x", line_data=current[0], fig_idx=2)
+        viewer.add_data_to_line(line_name="current_ori_y", line_data=current[1], fig_idx=2)
+        viewer.add_data_to_line(line_name="current_ori_z", line_data=current[2], fig_idx=2)
 
         # Update Joint Velocity lines
         for joint_idx in ur5e_dof_indices:

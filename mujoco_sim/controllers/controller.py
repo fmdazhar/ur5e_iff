@@ -1,7 +1,6 @@
 from typing import Optional, Tuple, Union
 import mujoco
 import numpy as np
-from dm_robotics.transformations import transformations as tr
 
 
 class Controller:
@@ -31,6 +30,16 @@ class Controller:
         self.pos_kd = None
         self.ori_kd = None
 
+        # Preallocate memory for commonly used variables
+        self.quat = np.zeros(4)
+        self.quat_des = np.zeros(4)
+        self.quat_conj = np.zeros(4)
+        self.quat_err = np.zeros(4)
+        self.ori_err = np.zeros(3)
+        self.J_v = np.zeros((3, model.nv), dtype=np.float64)
+        self.J_w = np.zeros((3, model.nv), dtype=np.float64)
+        self.M = np.zeros((model.nv, model.nv), dtype=np.float64)
+
     def set_parameters(
         self,
         damping_ratio: float = 1,
@@ -58,81 +67,32 @@ class Controller:
         else:
             raise ValueError("Method must be one of 'dynamics', 'pinv', 'svd', 'trans', 'dls'")
 
-    def pd_control(self, x, x_des, dx, kp_kv, ddx_max=0.0) -> np.ndarray:
-        x_err = x - x_des
-        dx_err = dx
-
-        x_err_norm = np.linalg.norm(x_err)
-        if x_err_norm < self.error_tolerance_pos:
-            x_err = np.zeros_like(x_err)
-            dx_err = np.zeros_like(dx_err)
-
-        x_err *= -kp_kv[:, 0]
-        dx_err *= -kp_kv[:, 1]
-
-        # # Print the position error and velocity error for debugging
-        # print("Position Error (x_err):", x_err)
-        # print("Velocity Error (dx_err):", dx_err)
-
-        if ddx_max > 0.0:
-            x_err_sq_norm = np.sum(x_err**2)
-            ddx_max_sq = ddx_max**2
-            if x_err_sq_norm > ddx_max_sq:
-                x_err *= ddx_max / np.sqrt(x_err_sq_norm)
-
-        return x_err + dx_err
-
-    def pd_control_orientation(self, quat, quat_des, w, kp_kv, dw_max=0.0) -> np.ndarray:
-        quat_err = tr.quat_diff_active(source_quat=quat_des, target_quat=quat)
-        ori_err = tr.quat_to_axisangle(quat_err)
-        w_err = w
-
-        ori_err_norm = np.linalg.norm(ori_err)
-        if ori_err_norm < self.error_tolerance_ori:
-            ori_err = np.zeros_like(ori_err)
-            w_err = np.zeros_like(w_err)
-
-        ori_err *= -kp_kv[:, 0]
-        w_err *= -kp_kv[:, 1]
-
-        if dw_max > 0.0:
-            ori_err_sq_norm = np.sum(ori_err**2)
-            dw_max_sq = dw_max**2
-            if ori_err_sq_norm > dw_max_sq:
-                ori_err *= dw_max / np.sqrt(ori_err_sq_norm)
-
-        return ori_err + w_err
-
     def compute_gains(self, gains, kd_values, method: str):
+        kp = np.asarray(gains)
         if method == "dynamics":
-            kp = np.asarray(gains)
             if kd_values is None:
                 kd = self.damping_ratio * 2 * np.sqrt(kp)
             else:
                 kd = np.asarray(kd_values)
         else:
-            kp = np.asarray(gains)
             if kd_values is None:
-                kd = self.damping_ratio * kp 
+                kd = self.damping_ratio * kp
             else:
                 kd = np.asarray(kd_values) / self.integration_dt
 
         return np.stack([kp, kd], axis=-1)
 
     def control(self, pos: Optional[np.ndarray] = None, ori: Optional[np.ndarray] = None) -> np.ndarray:
-        if pos is None:
-            x_des = self.data.site_xpos[self.site_id]
-        else:
-            x_des = np.asarray(pos)
+        # Desired position and orientation
+        x_des = self.data.site_xpos[self.site_id] if pos is None else np.asarray(pos)
         if ori is None:
-            xmat = self.data.site_xmat[self.site_id].reshape((3, 3))
-            quat_des = tr.mat_to_quat(xmat)
+            mujoco.mju_mat2Quat(self.quat_des, self.data.site_xmat[self.site_id])
         else:
             ori = np.asarray(ori)
             if ori.shape == (3, 3):
-                quat_des = tr.mat_to_quat(ori)
+                mujoco.mju_mat2Quat(self.quat_des, ori)
             else:
-                quat_des = ori
+                self.quat_des[:] = ori
 
         kp_kv_pos = self.compute_gains(self.pos_gains, self.pos_kd, self.method)
         kp_kv_ori = self.compute_gains(self.ori_gains, self.ori_kd, self.method)
@@ -143,42 +103,62 @@ class Controller:
         q = self.data.qpos[self.dof_ids]
         dq = self.data.qvel[self.dof_ids]
 
-        J_v = np.zeros((3, self.model.nv), dtype=np.float64)
-        J_w = np.zeros((3, self.model.nv), dtype=np.float64)
-        mujoco.mj_jacSite(self.model, self.data, J_v, J_w, self.site_id)
-        J_v = J_v[:, self.dof_ids]
-        J_w = J_w[:, self.dof_ids]
+        mujoco.mj_jacSite(self.model, self.data, self.J_v, self.J_w, self.site_id)
+        J_v = self.J_v[:, self.dof_ids]
+        J_w = self.J_w[:, self.dof_ids]
         J = np.concatenate([J_v, J_w], axis=0)
 
-        x = self.data.site_xpos[self.site_id]
-        dx = J_v @ dq
-        ddx = self.pd_control(x, x_des, dx, kp_kv_pos, ddx_max)
+        # Position Control
+        x_err = self.data.site_xpos[self.site_id] - x_des
+        dx_err = J_v @ dq
 
-        quat = tr.mat_to_quat(self.data.site_xmat[self.site_id].reshape((3, 3)))
-        if quat @ quat_des < 0.0:
-            quat *= -1.0
-        w = J_w @ dq
-        dw = self.pd_control_orientation(quat, quat_des, w, kp_kv_ori, dw_max)
+        x_err_norm = np.linalg.norm(x_err)
+        if x_err_norm < self.error_tolerance_pos:
+            x_err.fill(0)
+            dx_err.fill(0)
+
+        x_err *= -kp_kv_pos[:, 0]
+        dx_err *= -kp_kv_pos[:, 1]
+
+        if ddx_max > 0.0:
+            x_err_sq_norm = np.sum(x_err**2)
+            ddx_max_sq = ddx_max**2
+            if x_err_sq_norm > ddx_max_sq:
+                x_err *= ddx_max / np.sqrt(x_err_sq_norm)
+
+        ddx = x_err + dx_err
+
+        # Orientation Control
+        mujoco.mju_mat2Quat(self.quat, self.data.site_xmat[self.site_id])
+        mujoco.mju_negQuat(self.quat_conj, self.quat_des)
+        mujoco.mju_mulQuat(self.quat_err, self.quat, self.quat_conj)
+        mujoco.mju_quat2Vel(self.ori_err, self.quat_err, 1.0)
+        w_err = J_w @ dq
+
+        ori_err_norm = np.linalg.norm(self.ori_err)
+        if ori_err_norm < self.error_tolerance_ori:
+            self.ori_err.fill(0)
+            w_err.fill(0)
+
+        self.ori_err *= -kp_kv_ori[:, 0]
+        w_err *= -kp_kv_ori[:, 1]
+
+        if dw_max > 0.0:
+            ori_err_sq_norm = np.sum(self.ori_err**2)
+            dw_max_sq = dw_max**2
+            if ori_err_sq_norm > dw_max_sq:
+                self.ori_err *= dw_max / np.sqrt(ori_err_sq_norm)
+
+        dw = self.ori_err + w_err
 
         error = np.concatenate([ddx, dw], axis=0)
 
         if self.method == "dynamics":
-            M = np.zeros((self.model.nv, self.model.nv), dtype=np.float64)
-            mujoco.mj_fullM(self.model, M, self.data.qM)
-            M = M[self.dof_ids, :][:, self.dof_ids]
-
+            mujoco.mj_fullM(self.model, self.M, self.data.qM)
+            M = self.M[self.dof_ids, :][:, self.dof_ids]
             M_inv = np.linalg.inv(M)
-
-            # Mx_inv = J @ M_inv @ J.T
-            # if abs(np.linalg.det(Mx_inv)) >= 1e-2:
-            #     Mx = np.linalg.inv(Mx_inv)
-            # else:
-            #     Mx = np.linalg.pinv(Mx_inv, rcond=1e-2)
             ddq = M_inv @ J.T @ error
             dq += ddq * self.integration_dt
-            # print("Error:", error)
-            print("Acceleration (ddq):", ddq)
-            # print("velocity:", dq)
             q += dq * self.integration_dt
 
         elif self.method == "pinv":
@@ -188,9 +168,7 @@ class Controller:
         elif self.method == "svd":
             U, S, Vt = np.linalg.svd(J, full_matrices=False)
             S_inv = np.zeros_like(S)
-            for i in range(len(S)):
-                if S[i] > 1e-5:
-                    S_inv[i] = 1.0 / S[i]
+            S_inv[S > 1e-5] = 1.0 / S[S > 1e-5]
             J_pinv = Vt.T @ np.diag(S_inv) @ U.T
             dq = J_pinv @ error
             q += dq
@@ -201,7 +179,7 @@ class Controller:
             damping = 1e-4
             lambda_I = damping * np.eye(J.shape[0])
             dq = J.T @ np.linalg.inv(J @ J.T + lambda_I) @ error
-            q += dq 
+            q += dq
 
         q_min = self.model.actuator_ctrlrange[:6, 0]
         q_max = self.model.actuator_ctrlrange[:6, 1]
