@@ -8,19 +8,33 @@ from mujoco_sim.utils.viz import SliderController
 
 
 # Initialize the environment and controller
-env = envs.ur5ePickCubeGymEnv(action_scale=(1, 1))
+env = envs.ur5ePickCubeGymEnv(action_scale=(0.01, 1))
 action_spec = env.action_space
 controller = env.controller
 
 # # Set controller parameters dynamically
 # controller.set_parameters(
-#     damping_ratio=0,
+#     damping_ratio=1,
 #     error_tolerance_pos=0.01,
 #     error_tolerance_ori=0.01,
-#     pos_gains=(0.5, 0.5, 0.5),
-#     ori_gains=(0.5, 0.5, 0.5),
-#     method="dls"
+#     pos_gains=(20, 20, 20),
+#     ori_gains=(2, 2, 2),
+#     # max_pos_error = 300,
+#     # max_ori_error = 300,
+#     method="dynamics"
 # )
+
+# Set controller parameters dynamically
+controller.set_parameters(
+    damping_ratio=0.0,
+    error_tolerance_pos=0.01,
+    error_tolerance_ori=0.01,
+    pos_gains=(0.1, 0.1, 0.1),
+    ori_gains=(0.05, 0.05, 0.05),
+    # max_pos_error = 300,
+    # max_ori_error = 300,
+    method="dls"
+)
 
 slider_controller = SliderController(controller)
 
@@ -151,6 +165,19 @@ fig6.figurergba[3] = 0.2
 fig6.gridsize[0] = 5
 fig6.gridsize[1] = 5
 
+# Figure 7: Joint Accelerations
+for joint_idx in ur5e_dof_indices:
+    viewer.add_line_to_fig(line_name=f"joint_acc_{joint_idx}", fig_idx=7)
+
+fig7 = viewer.figs[7]
+fig7.title = "Joint Accelerations"
+fig7.xlabel = "Timesteps"
+fig7.flg_legend = True
+fig7.figurergba[0] = 0.2
+fig7.figurergba[3] = 0.2
+fig7.gridsize[0] = 5
+fig7.gridsize[1] = 5
+
 # Main simulation loop
 while viewer.is_alive:
     if viewer.reset_requested:
@@ -239,6 +266,10 @@ while viewer.is_alive:
         viewer.add_data_to_line(line_name="tcp_vel_x", line_data=tcp_vel[0], fig_idx=6)
         viewer.add_data_to_line(line_name="tcp_vel_y", line_data=tcp_vel[1], fig_idx=6)
         viewer.add_data_to_line(line_name="tcp_vel_z", line_data=tcp_vel[2], fig_idx=6)
+
+        # Update Joint Acceleration lines
+        for joint_idx in ur5e_dof_indices:
+            viewer.add_data_to_line(line_name=f"joint_acc_{joint_idx}", line_data=d.qacc[joint_idx], fig_idx=7)
 
         viewer.render()
 

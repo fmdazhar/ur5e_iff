@@ -48,8 +48,12 @@ class SliderController:
 
 
     def create_rescalable_slider(self, label, from_, to, resolution, initial, command):
+        # Dynamically adjust 'to' if initial value exceeds it
+        if initial > to:
+            to = initial * 1.5  # Set a slightly higher upper bound for flexibility
+        
         slider = tk.Scale(self.root, from_=from_, to=to, resolution=resolution, label=label,
-                          orient="horizontal", length=500)
+                        orient="horizontal", length=500)
         slider.config(font=font.Font(size=16, weight="bold"))
         slider.set(initial)
         slider.pack(pady=10)
@@ -58,6 +62,7 @@ class SliderController:
         slider.bind("<ButtonRelease-1>", lambda event, s=slider: self.rescale_slider(s, command))
         
         return slider
+
 
     def rescale_slider(self, slider, command):
         value = slider.get()
@@ -70,11 +75,13 @@ class SliderController:
 
         command(value)
 
-    # Update methods for each parameter
     def update_pos_gains_master(self, _):
         master_value = self.pos_gains_master_slider.get()
+        # Set sub-sliders' value and range based on the master slider
         for slider in self.pos_gains_sliders:
             slider.set(master_value)
+            # Adjust sub-sliders' range if master slider has rescaled
+            slider.config(to=self.pos_gains_master_slider.cget("to"), from_=self.pos_gains_master_slider.cget("from"))
         self.update_pos_gains(None)
 
     def update_pos_gains(self, _):
@@ -83,8 +90,11 @@ class SliderController:
 
     def update_ori_gains_master(self, _):
         master_value = self.ori_gains_master_slider.get()
+        # Set sub-sliders' value and range based on the master slider
         for slider in self.ori_gains_sliders:
             slider.set(master_value)
+            # Adjust sub-sliders' range if master slider has rescaled
+            slider.config(to=self.ori_gains_master_slider.cget("to"), from_=self.ori_gains_master_slider.cget("from"))
         self.update_ori_gains(None)
 
     def update_ori_gains(self, _):

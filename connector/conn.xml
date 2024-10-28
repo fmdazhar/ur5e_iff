@@ -1,0 +1,90 @@
+<mujoco model="connector_port">
+    <compiler angle="radian" meshdir="meshes/"/>
+
+    <asset>
+        <material name="connector_mat" reflectance="0" rgba="0.824 0.435 0.227 1" shininess="0.5" specular="0"/>
+        <material name="port_mat" reflectance="0" rgba="1 0.69 0.2 1" shininess="0.5" specular="0"/>
+
+        <mesh name="connector1_back" file="connector1/connector1_back.stl" scale="0.001 0.001 0.001"/>
+        <mesh name="connector1_center" file="connector1/connector1_center.stl" scale="0.001 0.001 0.001"/>
+        <mesh name="connector1_bottom" file="connector1/connector1_bottom.stl" scale="0.001 0.001 0.001"/>
+
+        <mesh name="port1_bottom" file="port1/port1_bottom.stl" scale="0.001 0.001 0.001" />
+        <mesh name="port1_left1" file="port1/port1_left1.stl" scale="0.001 0.001 0.001" />
+        <mesh name="port1_right1" file="port1/port1_right1.stl" scale="0.001 0.001 0.001" />
+        <mesh name="port1_left2" file="port1/port1_left2.stl" scale="0.001 0.001 0.001" />
+        <mesh name="port1_right2" file="port1/port1_right2.stl" scale="0.001 0.001 0.001" />
+        <mesh name="port1_left3" file="port1/port1_left3.stl" scale="0.001 0.001 0.001" />
+        <mesh name="port1_right3" file="port1/port1_right3.stl" scale="0.001 0.001 0.001" />
+        <mesh name="port1_top" file="port1/port1_top.stl" scale="0.001 0.001 0.001" />
+        <mesh name="port1_back1" file="port1/port1_back1.stl" scale="0.001 0.001 0.001" />
+        <mesh name="port1_back2" file="port1/port1_back2.stl" scale="0.001 0.001 0.001" />
+
+        <mesh name="port2_top" file="port1/port2-Plate_Top.stl" scale="0.001 0.001 0.001" />
+        <mesh name="port2_bottom" file="port1/port2-Plate_Bottom.stl" scale="0.001 0.001 0.001" />
+        <mesh name="port2_left1" file="port1/port2-Plate_Left1.stl" scale="0.001 0.001 0.001" />
+        <mesh name="port2_left2" file="port1/port2-Plate_Left2.stl" scale="0.001 0.001 0.001" />
+        <mesh name="port2_right1" file="port1/port2-Plate_Right1.stl" scale="0.001 0.001 0.001" />
+        <mesh name="port2_right2" file="port1/port2-Plate_Right2.stl" scale="0.001 0.001 0.001" />
+
+        <!-- White background texture -->
+        <texture builtin="flat" height="256" width="256" rgb1="1 1 1" rgb2="1 1 1" type="skybox"/>
+    </asset>
+
+    <default>
+        <equality solref="0.0008 1"/>
+        <geom solref="0.0008 1"/>
+        <default class="tcp:compliance">
+            <joint armature="0.01" damping="0.5" frictionloss="0.1" stiffness="1"/>
+            <equality/>
+        </default>
+    </default>
+    
+    <worldbody>
+        <body name="connector1" pos="0 0.009 0.01" quat="0.7071068 0 0 0.7071068">
+            <joint name="tcp:compliance:x" type="slide" axis="1 0 0"/>
+            <joint name="tcp:compliance:y" type="slide" axis="0 1 0"/>
+            <joint name="tcp:compliance:z" type="slide" axis="0 0 1"/>
+            <geom pos="0 0 0" type="mesh" mesh="connector1_back" material="connector_mat"/>
+            <geom pos="0 0 0" type="mesh" mesh="connector1_center" material="connector_mat"/>
+            <geom pos="0 0 0" type="mesh" mesh="connector1_bottom" material="connector_mat"/>
+            <site name="connector_front" type="sphere" pos="-0.008 0 0.0227" size="0.001 0.001 0.001" rgba="0 1 0 1"/>
+            <site name="connector_back" type="sphere" pos="-0.008 0 0.0035" size="0.001 0.001 0.001" rgba="0.4 0.8 0.4 1"/>
+        </body>
+
+        <body name="port1" pos="0.008 0 0.2" quat="0 1 0 0">
+            <geom pos="0 0 0" type="mesh" mesh="port1_bottom" />
+            <geom pos="0 0 0" type="mesh" mesh="port1_left1" />
+            <geom pos="0 0 0" type="mesh" mesh="port1_right1" />
+            <geom pos="0 0 0" type="mesh" mesh="port1_left2" />
+            <geom pos="0 0 0" type="mesh" mesh="port1_right2" />
+            <geom pos="0 0 0" type="mesh" mesh="port1_left3" />
+            <geom pos="0 0 0" type="mesh" mesh="port1_right3" />
+            <geom pos="0 0 0" type="mesh" mesh="port1_top" />
+            <geom pos="0 0 0" type="mesh" mesh="port1_back1" />
+            <geom pos="0 0 0" type="mesh" mesh="port1_back2" />
+
+            <geom pos="0 0 0" type="mesh" mesh="port2_top"  />
+            <geom pos="0 0 0" type="mesh" mesh="port2_bottom"  />
+            <geom pos="0 0 0" type="mesh" mesh="port2_left1"  />
+            <geom pos="0 0 0" type="mesh" mesh="port2_left2"  />
+            <geom pos="0 0 0" type="mesh" mesh="port2_right1"  />
+            <geom pos="0 0 0" type="mesh" mesh="port2_right2"  />
+
+            <site name="port_bottom" type="sphere" pos="-0.008 0 0.0192" size="0.001 0.001 0.001" rgba="1 0 0 1"/>
+            <site name="port_top" type="sphere" pos="-0.008 0 0" size="0.001 0.001 0.001" rgba="0.8 0.4 0.4 1"/>
+        </body>
+    </worldbody>
+
+    <equality>
+        <joint class="tcp:compliance" joint1="tcp:compliance:x" polycoef="0 0 0 0 0"/>
+        <joint class="tcp:compliance" joint1="tcp:compliance:y" polycoef="0 0 0 0 0"/>
+        <joint class="tcp:compliance" joint1="tcp:compliance:z" polycoef="0 0 0 0 0"/>
+    </equality>
+
+    <visual>
+        <global offwidth="1920" offheight="1080"/>
+        <scale framewidth="0.005" framelength="0.1"/>
+    </visual>
+
+</mujoco>

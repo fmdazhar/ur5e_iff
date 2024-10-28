@@ -29,6 +29,7 @@ class Controller:
         self.ori_gains = (0.5, 0.5, 0.5)
         self.pos_kd = None
         self.ori_kd = None
+        self.max_angvel = 3.14
 
         # Preallocate memory for commonly used variables
         self.quat = np.zeros(4)
@@ -68,17 +69,18 @@ class Controller:
             raise ValueError("Method must be one of 'dynamics', 'pinv', 'svd', 'trans', 'dls'")
 
     def compute_gains(self, gains, kd_values, method: str):
-        kp = np.asarray(gains)
+        kp = np.asarray(gains) / self.integration_dt
         if method == "dynamics":
+            kp = kp * self.integration_dt
             if kd_values is None:
                 kd = self.damping_ratio * 2 * np.sqrt(kp)
             else:
                 kd = np.asarray(kd_values)
         else:
             if kd_values is None:
-                kd = self.damping_ratio * kp
+                kd = self.damping_ratio * kp * self.integration_dt
             else:
-                kd = np.asarray(kd_values) / self.integration_dt
+                kd = np.asarray(kd_values)
 
         return np.stack([kp, kd], axis=-1)
 
@@ -159,7 +161,12 @@ class Controller:
             M_inv = np.linalg.inv(M)
             ddq = M_inv @ J.T @ error
             dq += ddq * self.integration_dt
-            q += dq * self.integration_dt
+            # Scale down joint velocities if they exceed maximum.
+            if self.max_angvel > 0:
+                dq_abs_max = np.abs(dq).max()
+                if dq_abs_max > self.max_angvel:
+                    dq *= self.max_angvel / dq_abs_max
+            q += dq / 5
 
         elif self.method == "pinv":
             J_pinv = np.linalg.pinv(J)
@@ -179,7 +186,12 @@ class Controller:
             damping = 1e-4
             lambda_I = damping * np.eye(J.shape[0])
             dq = J.T @ np.linalg.inv(J @ J.T + lambda_I) @ error
-            q += dq
+            # Scale down joint velocities if they exceed maximum.
+            if self.max_angvel > 0:
+                dq_abs_max = np.abs(dq).max()
+                if dq_abs_max > self.max_angvel:
+                    dq *= self.max_angvel / dq_abs_max
+            q += dq / 5
 
         q_min = self.model.actuator_ctrlrange[:6, 0]
         q_max = self.model.actuator_ctrlrange[:6, 1]
