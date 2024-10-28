@@ -105,7 +105,7 @@ class ur5ePickCubeGymEnv(MujocoGymEnv):
         model=self._model,
         data=self._data,
         site_id=self._pinch_site_id,
-        integration_dt= 0.225,
+        integration_dt= self.physics_dt,
         dof_ids=self._ur5e_dof_ids,
         )
 
@@ -239,9 +239,11 @@ class ur5ePickCubeGymEnv(MujocoGymEnv):
         # Set mocap orientation using quaternion
         nori = np.asarray([qx, qy, qz, qw])
         nori = nori / np.linalg.norm(nori)  # Normalize the quaternion
+        # Apply constraint to prevent upward-facing orientation
+        nori[2] = min(nori[2], 0.5)
+        nori /= np.linalg.norm(nori)  # Ensure initial normalization
         self._data.mocap_quat[0] = nori
-
-
+        
         # Set gripper grasp.
         g = self._data.ctrl[self._gripper_ctrl_id] / 255
         dg = grasp * self._action_scale[1]

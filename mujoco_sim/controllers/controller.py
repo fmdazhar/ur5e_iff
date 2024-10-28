@@ -20,14 +20,14 @@ class Controller:
         self.dof_ids = dof_ids
 
         # Default parameters
-        self.damping_ratio = 1.0
+        self.damping_ratio = 0.0
         self.error_tolerance_pos = 0.01
         self.error_tolerance_ori = 0.01
         self.max_pos_error = None
         self.max_ori_error = None
-        self.method = "dynamics"
+        self.method = "dls"
         self.pos_gains = (0.5, 0.5, 0.5)
-        self.ori_gains = (0.25, 0.25, 0.25)
+        self.ori_gains = (0.5, 0.5, 0.5)
         self.pos_kd = None
         self.ori_kd = None
 
@@ -113,9 +113,9 @@ class Controller:
         else:
             kp = np.asarray(gains)
             if kd_values is None:
-                kd = self.damping_ratio * kp * self.integration_dt
+                kd = self.damping_ratio * kp 
             else:
-                kd = np.asarray(kd_values)
+                kd = np.asarray(kd_values) / self.integration_dt
 
         return np.stack([kp, kd], axis=-1)
 
@@ -184,7 +184,7 @@ class Controller:
         elif self.method == "pinv":
             J_pinv = np.linalg.pinv(J)
             dq = J_pinv @ error
-            q += dq 
+            q += dq
         elif self.method == "svd":
             U, S, Vt = np.linalg.svd(J, full_matrices=False)
             S_inv = np.zeros_like(S)
@@ -193,10 +193,10 @@ class Controller:
                     S_inv[i] = 1.0 / S[i]
             J_pinv = Vt.T @ np.diag(S_inv) @ U.T
             dq = J_pinv @ error
-            q += dq 
+            q += dq
         elif self.method == "trans":
             dq = J.T @ error
-            q += dq 
+            q += dq
         else:
             damping = 1e-4
             lambda_I = damping * np.eye(J.shape[0])

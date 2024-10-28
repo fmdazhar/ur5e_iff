@@ -14,15 +14,15 @@ action_spec = env.action_space
 controller = env.controller
 slider_controller = SliderController(controller)
 
-# Set controller parameters dynamically
-controller.set_parameters(
-    damping_ratio=1.5,
-    error_tolerance_pos=0.01,
-    error_tolerance_ori=0.01,
-    pos_gains=(0.5, 0.5, 0.5),
-    ori_gains=(0.5, 0.5, 0.5),
-    method="dls"
-)
+# # Set controller parameters dynamically
+# controller.set_parameters(
+#     damping_ratio=0,
+#     error_tolerance_pos=0.01,
+#     error_tolerance_ori=0.01,
+#     pos_gains=(0.5, 0.5, 0.5),
+#     ori_gains=(0.5, 0.5, 0.5),
+#     method="dls"
+# )
 
 # Sample a random action within the action space
 def sample():
@@ -163,7 +163,7 @@ while viewer.is_alive:
         step_start = time.time()
 
         # Update action every 3 seconds
-        if time.time() - last_sample_time >= 3.0:
+        if time.time() - last_sample_time >= 5.0:
             action = sample()
             last_sample_time = time.time()
 
