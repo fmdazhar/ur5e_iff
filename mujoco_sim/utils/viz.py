@@ -25,17 +25,17 @@ class SliderController:
 
         self.integration_dt_slider = self.create_rescalable_slider("Integration DT", 0, 1, 0.001, self.controller.integration_dt, self.update_integration_dt)
 
-        self.pos_gains_master_slider = self.create_rescalable_slider("Master Pos Gains", 0, 10, 0.1, self.controller.pos_gains[0], self.update_pos_gains_master)
+        self.pos_gains_master_slider = self.create_rescalable_slider("Master Pos Gains", 0, 10, 0.01, self.controller.pos_gains[0], self.update_pos_gains_master)
         
         self.pos_gains_sliders = [
-            self.create_rescalable_slider(f"Pos Gain {i+1}", 0, 10, 0.1, self.controller.pos_gains[i], self.update_pos_gains)
+            self.create_rescalable_slider(f"Pos Gain {i+1}", 0, 10, 0.01, self.controller.pos_gains[i], self.update_pos_gains)
             for i in range(3)
         ]
         
-        self.ori_gains_master_slider = self.create_rescalable_slider("Master Ori Gains", 0, 10, 0.1, self.controller.ori_gains[0], self.update_ori_gains_master)
+        self.ori_gains_master_slider = self.create_rescalable_slider("Master Ori Gains", 0, 10, 0.01, self.controller.ori_gains[0], self.update_ori_gains_master)
         
         self.ori_gains_sliders = [
-            self.create_rescalable_slider(f"Ori Gain {i+1}", 0, 10, 0.1, self.controller.ori_gains[i], self.update_ori_gains)
+            self.create_rescalable_slider(f"Ori Gain {i+1}", 0, 10, 0.01, self.controller.ori_gains[i], self.update_ori_gains)
             for i in range(3)
         ]
         

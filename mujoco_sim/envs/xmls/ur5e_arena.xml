@@ -27,7 +27,7 @@
     <geom
       name="cartesian_bounds"
       type="box"
-      size="0.1 0.3 0.1"
+      size="0.1 0.2 0.1"
       pos="0.3 0 0.4"
       material="boundary_material"
       contype="0"

@@ -26,7 +26,7 @@ class Controller:
         self.max_pos_error = None
         self.max_ori_error = None
         self.method = "dls"
-        self.pos_gains = (0.5, 0.5, 0.5)
+        self.pos_gains = (1, 1, 1)
         self.ori_gains = (0.5, 0.5, 0.5)
         self.pos_kd = None
         self.ori_kd = None
@@ -70,9 +70,9 @@ class Controller:
         x_err *= -kp_kv[:, 0]
         dx_err *= -kp_kv[:, 1]
 
-        # Print the position error and velocity error for debugging
-        print("Position Error (x_err):", x_err)
-        print("Velocity Error (dx_err):", dx_err)
+        # # Print the position error and velocity error for debugging
+        # print("Position Error (x_err):", x_err)
+        # print("Velocity Error (dx_err):", dx_err)
 
         if ddx_max > 0.0:
             x_err_sq_norm = np.sum(x_err**2)
