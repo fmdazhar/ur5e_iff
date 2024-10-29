@@ -69,14 +69,17 @@ class Controller:
             raise ValueError("Method must be one of 'dynamics', 'pinv', 'svd', 'trans', 'dls'")
 
     def compute_gains(self, gains, kd_values, method: str):
-        kp = np.asarray(gains) / self.integration_dt
+
         if method == "dynamics":
-            kp = kp * self.integration_dt
+            kp = np.asarray(gains) 
+
             if kd_values is None:
                 kd = self.damping_ratio * 2 * np.sqrt(kp)
             else:
                 kd = np.asarray(kd_values)
         else:
+            kp = np.asarray(gains) / self.integration_dt
+
             if kd_values is None:
                 kd = self.damping_ratio * kp * self.integration_dt
             else:
@@ -159,8 +162,27 @@ class Controller:
             mujoco.mj_fullM(self.model, self.M, self.data.qM)
             M = self.M[self.dof_ids, :][:, self.dof_ids]
             M_inv = np.linalg.inv(M)
-            ddq = M_inv @ J.T @ error
-            dq += ddq * self.integration_dt
+
+            Mx_inv_v = J_v @ M_inv @ J_v.T
+            Mx_inv_w = J_w @ M_inv @ J_w.T
+            # Compute Mx_v
+            if abs(np.linalg.det(Mx_inv_v)) >= 1e-2:
+                Mx_v = np.linalg.inv(Mx_inv_v)
+            else:
+                Mx_v = np.linalg.pinv(Mx_inv_v, rcond=1e-2)
+
+            # Compute Mx_w
+            if abs(np.linalg.det(Mx_inv_w)) >= 1e-2:
+                Mx_w = np.linalg.inv(Mx_inv_w)
+            else:
+                Mx_w = np.linalg.pinv(Mx_inv_w, rcond=1e-2)
+
+            force = Mx_v @ ddx
+            torque = Mx_w @ dw
+            wrench = np.concatenate([force, torque], axis=0)
+
+            ddq = M_inv @ J.T @ wrench
+            dq += ddq
             # Scale down joint velocities if they exceed maximum.
             if self.max_angvel > 0:
                 dq_abs_max = np.abs(dq).max()

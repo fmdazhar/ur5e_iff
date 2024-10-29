@@ -13,28 +13,28 @@ action_spec = env.action_space
 controller = env.controller
 
 # # Set controller parameters dynamically
-# controller.set_parameters(
-#     damping_ratio=1,
-#     error_tolerance_pos=0.01,
-#     error_tolerance_ori=0.01,
-#     pos_gains=(20, 20, 20),
-#     ori_gains=(2, 2, 2),
-#     # max_pos_error = 300,
-#     # max_ori_error = 300,
-#     method="dynamics"
-# )
-
-# Set controller parameters dynamically
 controller.set_parameters(
-    damping_ratio=0.0,
+    damping_ratio=1,
     error_tolerance_pos=0.01,
     error_tolerance_ori=0.01,
-    pos_gains=(0.1, 0.1, 0.1),
-    ori_gains=(0.05, 0.05, 0.05),
+    pos_gains=(2, 2, 2),
+    ori_gains=(1, 1, 1),
     # max_pos_error = 300,
     # max_ori_error = 300,
-    method="dls"
+    method="dynamics"
 )
+
+# # Set controller parameters dynamically
+# controller.set_parameters(
+#     damping_ratio=0.0,
+#     error_tolerance_pos=0.01,
+#     error_tolerance_ori=0.01,
+#     pos_gains=(0.1, 0.1, 0.1),
+#     ori_gains=(0.05, 0.05, 0.05),
+#     # max_pos_error = 300,
+#     # max_ori_error = 300,
+#     method="dls"
+# )
 
 slider_controller = SliderController(controller)
 
