@@ -48,6 +48,7 @@ class Controller:
         error_tolerance_ori: float = 0.01,
         max_pos_error: Optional[float] = None,
         max_ori_error: Optional[float] = None,
+        max_angvel: Optional[float] = None,
         pos_gains: Union[Tuple[float, float, float], np.ndarray] = (1, 1, 1),
         ori_gains: Union[Tuple[float, float, float], np.ndarray] = (1, 1, 1),
         pos_kd: Optional[Union[Tuple[float, float, float], np.ndarray]] = None,
@@ -61,6 +62,7 @@ class Controller:
         self.max_ori_error = max_ori_error
         self.pos_gains = pos_gains
         self.ori_gains = ori_gains
+        self.max_angvel = max_angvel
         self.pos_kd = pos_kd
         self.ori_kd = ori_kd
         if method in ["dynamics", "pinv", "svd", "trans", "dls"]:
