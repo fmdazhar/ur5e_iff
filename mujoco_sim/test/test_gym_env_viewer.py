@@ -12,29 +12,29 @@ env = envs.ur5ePickCubeGymEnv(action_scale=(0.01, 1))
 action_spec = env.action_space
 controller = env.controller
 
-# # Set controller parameters dynamically
-controller.set_parameters(
-    damping_ratio=1,
-    error_tolerance_pos=0.01,
-    error_tolerance_ori=0.01,
-    pos_gains=(2, 2, 2),
-    ori_gains=(1, 1, 1),
-    # max_pos_error = 300,
-    # max_ori_error = 300,
-    method="dynamics"
-)
-
-# # Set controller parameters dynamically
+# # # Set controller parameters dynamically
 # controller.set_parameters(
-#     damping_ratio=0.0,
-#     error_tolerance_pos=0.01,
-#     error_tolerance_ori=0.01,
-#     pos_gains=(0.1, 0.1, 0.1),
-#     ori_gains=(0.05, 0.05, 0.05),
+#     damping_ratio=0.8,
+#     error_tolerance_pos=0.001,
+#     error_tolerance_ori=0.001,
+#     pos_gains=(50, 50, 50),
+#     ori_gains=(50, 50, 50),
 #     # max_pos_error = 300,
 #     # max_ori_error = 300,
-#     method="dls"
+#     method="dynamics"
 # )
+
+# Set controller parameters dynamically
+controller.set_parameters(
+    damping_ratio=0.0,
+    error_tolerance_pos=0.001,
+    error_tolerance_ori=0.001,
+    pos_gains=(1, 1, 1),
+    ori_gains=(0.5, 0.5, 0.5),
+    # max_pos_error = 300,
+    # max_ori_error = 300,
+    method="dls"
+)
 
 slider_controller = SliderController(controller)
 

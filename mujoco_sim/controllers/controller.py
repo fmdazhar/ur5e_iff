@@ -29,7 +29,7 @@ class Controller:
         self.ori_gains = (0.5, 0.5, 0.5)
         self.pos_kd = None
         self.ori_kd = None
-        self.max_angvel = 3.14
+        self.max_angvel = 4
 
         # Preallocate memory for commonly used variables
         self.quat = np.zeros(4)
@@ -43,42 +43,54 @@ class Controller:
 
     def set_parameters(
         self,
-        damping_ratio: float = 1,
-        error_tolerance_pos: float = 0.01,
-        error_tolerance_ori: float = 0.01,
+        damping_ratio: Optional[float] = None,
+        error_tolerance_pos: Optional[float] = None,
+        error_tolerance_ori: Optional[float] = None,
         max_pos_error: Optional[float] = None,
         max_ori_error: Optional[float] = None,
         max_angvel: Optional[float] = None,
-        pos_gains: Union[Tuple[float, float, float], np.ndarray] = (1, 1, 1),
-        ori_gains: Union[Tuple[float, float, float], np.ndarray] = (1, 1, 1),
+        pos_gains: Optional[Union[Tuple[float, float, float], np.ndarray]] = None,
+        ori_gains: Optional[Union[Tuple[float, float, float], np.ndarray]] = None,
         pos_kd: Optional[Union[Tuple[float, float, float], np.ndarray]] = None,
         ori_kd: Optional[Union[Tuple[float, float, float], np.ndarray]] = None,
-        method: str = "dls",
+        method: Optional[str] = None,
     ):
-        self.damping_ratio = damping_ratio
-        self.error_tolerance_pos = error_tolerance_pos
-        self.error_tolerance_ori = error_tolerance_ori
-        self.max_pos_error = max_pos_error
-        self.max_ori_error = max_ori_error
-        self.pos_gains = pos_gains
-        self.ori_gains = ori_gains
-        self.max_angvel = max_angvel
-        self.pos_kd = pos_kd
-        self.ori_kd = ori_kd
-        if method in ["dynamics", "pinv", "svd", "trans", "dls"]:
-            self.method = method
-        else:
-            raise ValueError("Method must be one of 'dynamics', 'pinv', 'svd', 'trans', 'dls'")
+        if damping_ratio is not None:
+            self.damping_ratio = damping_ratio
+        if error_tolerance_pos is not None:
+            self.error_tolerance_pos = error_tolerance_pos
+        if error_tolerance_ori is not None:
+            self.error_tolerance_ori = error_tolerance_ori
+        if max_pos_error is not None:
+            self.max_pos_error = max_pos_error
+        if max_ori_error is not None:
+            self.max_ori_error = max_ori_error
+        if max_angvel is not None:
+            self.max_angvel = max_angvel
+        if pos_gains is not None:
+            self.pos_gains = pos_gains
+        if ori_gains is not None:
+            self.ori_gains = ori_gains
+        if pos_kd is not None:
+            self.pos_kd = pos_kd
+        if ori_kd is not None:
+            self.ori_kd = ori_kd
+        if method is not None:
+            if method in ["dynamics", "pinv", "svd", "trans", "dls"]:
+                self.method = method
+            else:
+                raise ValueError("Method must be one of 'dynamics', 'pinv', 'svd', 'trans', 'dls'")
+
 
     def compute_gains(self, gains, kd_values, method: str):
 
         if method == "dynamics":
             kp = np.asarray(gains) 
-
             if kd_values is None:
                 kd = self.damping_ratio * 2 * np.sqrt(kp)
             else:
                 kd = np.asarray(kd_values)
+            
         else:
             kp = np.asarray(gains) / self.integration_dt
 
@@ -184,13 +196,7 @@ class Controller:
             wrench = np.concatenate([force, torque], axis=0)
 
             ddq = M_inv @ J.T @ wrench
-            dq += ddq
-            # Scale down joint velocities if they exceed maximum.
-            if self.max_angvel > 0:
-                dq_abs_max = np.abs(dq).max()
-                if dq_abs_max > self.max_angvel:
-                    dq *= self.max_angvel / dq_abs_max
-            q += dq / 5
+            dq += ddq * self.integration_dt
 
         elif self.method == "pinv":
             J_pinv = np.linalg.pinv(J)
@@ -210,12 +216,13 @@ class Controller:
             damping = 1e-4
             lambda_I = damping * np.eye(J.shape[0])
             dq = J.T @ np.linalg.inv(J @ J.T + lambda_I) @ error
-            # Scale down joint velocities if they exceed maximum.
-            if self.max_angvel > 0:
-                dq_abs_max = np.abs(dq).max()
-                if dq_abs_max > self.max_angvel:
-                    dq *= self.max_angvel / dq_abs_max
-            q += dq / 5
+
+        # Scale down joint velocities if they exceed maximum.
+        if self.max_angvel > 0:
+            dq_abs_max = np.abs(dq).max()
+            if dq_abs_max > self.max_angvel:
+                dq *= self.max_angvel / dq_abs_max
+        q += dq * self.integration_dt
 
         q_min = self.model.actuator_ctrlrange[:6, 0]
         q_max = self.model.actuator_ctrlrange[:6, 1]

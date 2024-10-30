@@ -104,7 +104,7 @@ class ur5ePickCubeGymEnv(MujocoGymEnv):
         model=self._model,
         data=self._data,
         site_id=self._pinch_site_id,
-        integration_dt= self.physics_dt,
+        integration_dt= 0.2,
         dof_ids=self._ur5e_dof_ids,
         )
 
