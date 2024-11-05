@@ -1,5 +1,7 @@
 <mujoco model="Arena">
   <include file="ur5e.xml"/>
+  <include file="connector.xml"/>
+  <include file="port.xml"/>
 
   <option timestep=".002" noslip_iterations="5" noslip_tolerance="0"/>
 
@@ -53,4 +55,6 @@
     <framepos name="block_pos" objtype="geom" objname="block"/>
     <framequat name="block_quat" objtype="geom" objname="block"/>
   </sensor>
+
+
 </mujoco>

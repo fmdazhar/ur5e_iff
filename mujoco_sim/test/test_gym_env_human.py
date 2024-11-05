@@ -5,35 +5,21 @@ import numpy as np
 import glfw
 
 from mujoco_sim import envs
+from mujoco_sim.envs.wrappers import SpacemouseIntervention
+
 
 # glfw init
 glfw.init()
 
-env = envs.ur5ePickCubeGymEnv(action_scale=(1, 1))
+env = envs.ur5ePickCubeGymEnv(action_scale=(0.1,0.1, 1))
+env = SpacemouseIntervention(env)
 action_spec = env.action_space
 controller = env.controller
 
-# # Dynamically change parameters in main function
-# controller.set_parameters(
-#     damping_ratio= 1,
-#     error_tolerance_pos=0.01,
-#     error_tolerance_ori=0.01,
-#     # max_pos_error=2000.0,
-#     # max_ori_error=2000.0,
-#     pos_gains=(1, 1, 1),
-#     ori_gains=(0.5, 0.5, 0.5),
-#     # pos_gains=(0.1, 0.1, 0.1),
-#     # ori_gains=(0.05, 0.05, 0.05),
-#     # pos_gains=(0.25, 0.25, 0.25),
-#     # ori_gains=(0.25, 0.25, 0.25),
-#     # pos_kd=(0.05, 0.05, 0.05),
-#     # ori_kd=(0.05, 0.05, 0.05),
-#     method="dls"
-# )
 
 def sample():
-    a = np.random.uniform(action_spec.low, action_spec.high, action_spec.shape)
-    # a = np.zeros(action_spec.shape, dtype=action_spec.dtype)
+    # a = np.random.uniform(action_spec.low, action_spec.high, action_spec.shape)
+    a = np.zeros(action_spec.shape, dtype=action_spec.dtype)
     return a.astype(action_spec.dtype)
 
 
@@ -67,7 +53,7 @@ with mujoco.viewer.launch_passive(m, d, key_callback=key_callback) as viewer:
             step_start = time.time()
 
             # Update the action every 3 seconds
-            if time.time() - last_sample_time >= 3.0:
+            if time.time() - last_sample_time >= 10.0:
                 action = sample()  # Generate a new action sample
                 last_sample_time = time.time()  # Update the last sample time
 

@@ -1,0 +1,29 @@
+<mujoco model="connector">
+    <compiler angle="radian" />
+
+    <asset>
+        <material name="connector_mat" reflectance="0" rgba="0.824 0.435 0.227 1" shininess="0.5" specular="0"/>
+        <mesh name="connector1_back" file="connector1/connector1_back.stl" scale="0.001 0.001 0.001"/>
+        <mesh name="connector1_center" file="connector1/connector1_center.stl" scale="0.001 0.001 0.001"/>
+        <mesh name="connector1_bottom" file="connector1/connector1_bottom.stl" scale="0.001 0.001 0.001"/>
+        
+        <!-- White background texture -->
+        <texture builtin="flat" height="256" width="256" rgb1="1 1 1" rgb2="1 1 1" type="skybox"/>
+    </asset>
+    
+    <worldbody> 
+        <body name="connector_body" pos="0.35 0.0 .02" quat="0 0 1 0">
+            <freejoint/>
+            <geom pos="0 0 0" type="mesh" mesh="connector1_back" material="connector_mat"/>
+            <geom pos="0 0 0" type="mesh" mesh="connector1_center" material="connector_mat"/>
+            <geom pos="0 0 0" type="mesh" mesh="connector1_bottom" material="connector_mat"/>
+            <site name="connector_front" type="sphere" pos="-0.008 0 0.0227" size="0.001 0.001 0.001" rgba="0 1 0 1"/>
+            <site name="connector_back" type="sphere" pos="-0.008 0 0.0035" size="0.001 0.001 0.001" rgba="0.4 0.8 0.4 1"/>
+        </body>
+    </worldbody>
+
+    <visual>
+        <global offwidth="1920" offheight="1080"/>
+        <scale framewidth="0.005" framelength="0.1"/>
+    </visual>
+</mujoco>

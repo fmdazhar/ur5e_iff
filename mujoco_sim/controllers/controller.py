@@ -109,7 +109,7 @@ class Controller:
         else:
             ori = np.asarray(ori)
             if ori.shape == (3, 3):
-                mujoco.mju_mat2Quat(self.quat_des, ori)
+                mujoco.mju_mat2Quat(self.quat_des, ori.flatten())
             else:
                 self.quat_des[:] = ori
 

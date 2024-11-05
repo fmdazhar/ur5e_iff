@@ -3,7 +3,7 @@ import mujoco.viewer as mjv
 import os
 
 # Load the model XML file
-xml_path = "conn.xml"
+xml_path = "ur5e_arena.xml"
 if not os.path.exists(xml_path):
     raise FileNotFoundError(f"XML file '{xml_path}' does not exist.")
 
