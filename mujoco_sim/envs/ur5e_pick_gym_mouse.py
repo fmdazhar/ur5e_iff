@@ -5,7 +5,6 @@ import gym
 import mujoco
 import numpy as np
 from gym import spaces
-from scipy.spatial.transform import Rotation
 import mujoco_sim.utils.transform_utils as T
 
 
@@ -22,7 +21,7 @@ from mujoco_sim.mujoco_gym_env import GymRenderingSpec, MujocoGymEnv
 _HERE = Path(__file__).parent
 _XML_PATH = _HERE / "xmls" / "ur5e_arena.xml"
 _UR5E_HOME = np.asarray((-1.5708, -1.5708, 1.5708, -1.5708, -1.5708, 0)) # UR5e home position
-_CARTESIAN_BOUNDS = np.asarray([[0.2, -0.2, 0.3], [0.4, 0.2, 0.5]])
+_CARTESIAN_BOUNDS = np.asarray([[0.2, -0.2, 0.0], [0.4, 0.2, 0.5]])
 _SAMPLING_BOUNDS = np.asarray([[0.25, -0.25], [0.55, 0.25]])
 
 
@@ -101,6 +100,8 @@ class ur5ePickCubeGymEnv(MujocoGymEnv):
         self._pinch_site_id = self._model.site("pinch").id
         # print(self._pinch_site_id)
         self._block_z = self._model.geom("block").size[2]
+        self._connector_id = self._model.body("connector_body").id
+        self._connector_z = self._data.body(self._connector_id).xipos[2]
 
         self.controller = Controller(
         model=self._model,
@@ -198,13 +199,17 @@ class ur5ePickCubeGymEnv(MujocoGymEnv):
 
         mujoco.mj_forward(self._model, self._data)
 
-        # # Reset mocap body to home position.
-        # tcp_pos = self._data.sensor("hande/pinch_pos").data
-        # self._data.mocap_pos[0] = tcp_pos
+        # Reset mocap body to home position.
+        tcp_pos = self._data.sensor("hande/pinch_pos").data
+        self._data.mocap_pos[0] = tcp_pos
 
         # Sample a new block position.
         block_xy = np.random.uniform(*_SAMPLING_BOUNDS)
         self._data.jnt("block").qpos[:3] = (*block_xy, self._block_z)
+
+        connector_xy = np.random.uniform(*_SAMPLING_BOUNDS)
+        self._data.jnt("connector").qpos[:3] = (*connector_xy, self._connector_z)
+
         mujoco.mj_forward(self._model, self._data)
 
         # Cache the initial block height.
@@ -232,15 +237,19 @@ class ur5ePickCubeGymEnv(MujocoGymEnv):
         x, y, z, grasp, qx, qy, qz = action
 
         # Set the position.
-        pos = self._data.sensor("hande/pinch_pos").data.copy()
+        pos = self._data.mocap_pos[0].copy()
         dpos = np.asarray([x, y, z]) * self._action_scale[0]
         npos = np.clip(pos + dpos, *_CARTESIAN_BOUNDS)
+        self._data.mocap_pos[0] = npos
 
         ori = self.data.site_xmat[self._pinch_site_id].copy().reshape(3,3)
         nori = np.asarray([qx, qy, qz], dtype=np.float32) * self._action_scale[1]
         delta_ori = T.euler2mat(nori)
         new_ori = np.dot(delta_ori, ori)
-        
+        dori = np.zeros(4)
+        mujoco.mju_mat2Quat(dori, new_ori.flatten())
+        self._data.mocap_quat[0] = dori
+
         # Set gripper grasp.
         g = self._data.ctrl[self._gripper_ctrl_id] / 255
         dg = grasp * self._action_scale[2]
@@ -250,8 +259,8 @@ class ur5ePickCubeGymEnv(MujocoGymEnv):
         for _ in range(self._n_substeps):
 
             ctrl = self.controller.control(
-                pos=npos,
-                ori=new_ori,
+                pos=self._data.mocap_pos[0].copy(),
+                ori=self._data.mocap_quat[0].copy(),
             )
             
             # Set the control signal.

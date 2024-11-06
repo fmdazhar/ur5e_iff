@@ -13,7 +13,7 @@
     
     <worldbody> 
         <body name="connector_body" pos="0.35 0.0 .02" quat="0 0 1 0">
-            <freejoint/>
+            <freejoint name="connector"/>
             <geom pos="0 0 0" type="mesh" mesh="connector1_back" material="connector_mat"/>
             <geom pos="0 0 0" type="mesh" mesh="connector1_center" material="connector_mat"/>
             <geom pos="0 0 0" type="mesh" mesh="connector1_bottom" material="connector_mat"/>
@@ -21,6 +21,11 @@
             <site name="connector_back" type="sphere" pos="-0.008 0 0.0035" size="0.001 0.001 0.001" rgba="0.4 0.8 0.4 1"/>
         </body>
     </worldbody>
+
+    <sensor>
+        <framepos name="connector_pos" objtype="body" objname="connector_body"/>
+        <framequat name="connector_quat" objtype="body" objname="connector_body"/>
+    </sensor>
 
     <visual>
         <global offwidth="1920" offheight="1080"/>

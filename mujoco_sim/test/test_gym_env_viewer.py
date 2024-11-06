@@ -2,7 +2,6 @@ import time
 import mujoco
 from mujoco_sim.viewer.mujoco_viewer import MujocoViewer
 import numpy as np
-
 from mujoco_sim import envs
 from mujoco_sim.utils.viz import SliderController
 

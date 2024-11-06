@@ -100,6 +100,7 @@ class ur5ePickCubeGymEnv(MujocoGymEnv):
         # print(self._pinch_site_id)
         self._block_z = self._model.geom("block").size[2]
 
+
         self.controller = Controller(
         model=self._model,
         data=self._data,

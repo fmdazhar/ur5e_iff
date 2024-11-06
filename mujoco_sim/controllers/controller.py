@@ -108,10 +108,7 @@ class Controller:
             mujoco.mju_mat2Quat(self.quat_des, self.data.site_xmat[self.site_id])
         else:
             ori = np.asarray(ori)
-            if ori.shape == (3, 3):
-                mujoco.mju_mat2Quat(self.quat_des, ori.flatten())
-            else:
-                self.quat_des[:] = ori
+            self.quat_des[:] = ori
 
         kp_kv_pos = self.compute_gains(self.pos_gains, self.pos_kd, self.method)
         kp_kv_ori = self.compute_gains(self.ori_gains, self.ori_kd, self.method)

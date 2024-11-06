@@ -12,7 +12,7 @@ from mujoco_sim.envs.wrappers import SpacemouseIntervention
 glfw.init()
 
 env = envs.ur5ePickCubeGymEnv(action_scale=(0.1,0.1, 1))
-env = SpacemouseIntervention(env)
+# env = SpacemouseIntervention(env)
 action_spec = env.action_space
 controller = env.controller
 
@@ -21,7 +21,6 @@ def sample():
     # a = np.random.uniform(action_spec.low, action_spec.high, action_spec.shape)
     a = np.zeros(action_spec.shape, dtype=action_spec.dtype)
     return a.astype(action_spec.dtype)
-
 
 m = env.model
 d = env.data
