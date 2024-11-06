@@ -1,7 +1,7 @@
 import numpy as np
-from utils.input_utils import input2action  # Relative import for input2action
-from devices.keyboard import Keyboard  # Relative import from devices.keyboard
-from devices.spacemouse import SpaceMouse  # Relative import from devices.spacemouse
+from mujoco_sim.devices.input_utils import input2action  # Relative import for input2action
+from mujoco_sim.devices.keyboard import Keyboard  # Relative import from devices.keyboard
+from mujoco_sim.devices.spacemouse import SpaceMouse  # Relative import from devices.spacemouse
 
 
 def test_keyboard():

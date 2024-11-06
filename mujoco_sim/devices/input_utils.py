@@ -52,9 +52,6 @@ def input2action(device):
     if reset:
         return None, None
 
-    # Get gripper reference
-    gripper_dof = 1
-
     # First process the raw drotation
     drotation = raw_drotation[[1, 0, 2]]
 
@@ -64,12 +61,11 @@ def input2action(device):
     drotation = drotation * 1.5 if isinstance(device, Keyboard) else drotation * 50
     dpos = dpos * 75 if isinstance(device, Keyboard) else dpos * 125
 
-
     # map 0 to -1 (open) and map 1 to 1 (closed)
     grasp = 1 if grasp else -1
 
     # Create action based on action space of individual robot
-    action = np.concatenate([dpos, drotation, [grasp] * gripper_dof])
+    action = np.concatenate([dpos, [grasp], drotation])
 
     # Return the action and grasp
-    return action, grasp
+    return action

@@ -6,7 +6,7 @@ import numpy as np
 from pynput.keyboard import Controller, Key, Listener
 
 from .device import Device
-from utils.transform_utils import rotation_matrix
+from mujoco_sim.utils.transform_utils import rotation_matrix
 
 
 class Keyboard(Device):
@@ -17,7 +17,7 @@ class Keyboard(Device):
         rot_sensitivity (float): Magnitude of scale input rotation commands scaling
     """
 
-    def __init__(self, pos_sensitivity=1.0, rot_sensitivity=1.0):
+    def __init__(self, pos_sensitivity=0.01, rot_sensitivity=5):
 
         self._display_controls()
         self._reset_internal_state()

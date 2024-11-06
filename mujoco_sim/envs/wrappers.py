@@ -4,7 +4,10 @@ import gym
 import numpy as np
 from gym.spaces import Box
 import copy
-from mujoco_sim.spacemouse.spacemouse_expert import SpaceMouseExpert
+# from mujoco_sim.spacemouse.spacemouse_expert import SpaceMouseExpert
+from mujoco_sim.devices.input_utils import input2action  # Relative import for input2action
+from mujoco_sim.devices.keyboard import Keyboard  # Relative import from devices.keyboard
+from mujoco_sim.devices.spacemouse import SpaceMouse  # Relative import from devices.spacemouse
 from mujoco_sim.utils.rotations import quat_2_euler, euler_2_quat
 
 sigmoid = lambda x: 1 / (1 + np.exp(-x))
@@ -148,9 +151,10 @@ class SpacemouseIntervention(gym.ActionWrapper):
     def __init__(self, env):
         super().__init__(env)
 
-        self.expert = SpaceMouseExpert()
+        self.expert = Keyboard()
+        self.expert.start_control()
         self.last_intervene = 0
-        self.left, self.right = False, False
+
 
     def action(self, action: np.ndarray) -> np.ndarray:
         """
@@ -159,28 +163,10 @@ class SpacemouseIntervention(gym.ActionWrapper):
         Output:
         - action: spacemouse action if nonezero; else, policy action
         """
-        expert_a, buttons = self.expert.get_action()
-        self.left, self.right = buttons[0], buttons[1]
-
-        if np.linalg.norm(expert_a) > 0.001:
-            self.last_intervene = time.time()
-
-        if self.left:  # close gripper
-            gripper_action = np.random.uniform(-1, -0.9, size=(1,))
-            self.last_intervene = time.time()
-        elif self.right:  # open gripper
-            gripper_action = np.random.uniform(0.9, 1, size=(1,))
-            self.last_intervene = time.time()
-        else:
-            gripper_action = np.zeros((1,))
+        action = input2action(self.expert)
         
-        euler_angles = expert_a[3:6]  # Assuming expert_a[3:6] are roll, pitch, yaw
-
-        # Concatenate position deltas, quaternion, and gripper action
-        expert_a = np.concatenate((expert_a[:3], gripper_action, euler_angles), axis=0)
-
         if time.time() - self.last_intervene < 0.5:
-            return expert_a, True
+            return action, True
 
         return action, False
 
@@ -191,6 +177,5 @@ class SpacemouseIntervention(gym.ActionWrapper):
         obs, rew, done, truncated, info = self.env.step(new_action)
         if replaced:
             info["intervene_action"] = new_action
-        info["left"] = self.left
-        info["right"] = self.right
+
         return obs, rew, done, truncated, info

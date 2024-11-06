@@ -5,8 +5,6 @@ import gym
 import mujoco
 import numpy as np
 from gym import spaces
-import mujoco_sim.utils.transform_utils as T
-
 
 try:
     import mujoco_py
@@ -242,13 +240,13 @@ class ur5ePickCubeGymEnv(MujocoGymEnv):
         npos = np.clip(pos + dpos, *_CARTESIAN_BOUNDS)
         self._data.mocap_pos[0] = npos
 
-        ori = self.data.site_xmat[self._pinch_site_id].copy().reshape(3,3)
+        new_ori = np.zeros(4)
+        quat_des = np.zeros(4)
+        ori = self._data.mocap_quat[0].copy()
         nori = np.asarray([qx, qy, qz], dtype=np.float32) * self._action_scale[1]
-        delta_ori = T.euler2mat(nori)
-        new_ori = np.dot(delta_ori, ori)
-        dori = np.zeros(4)
-        mujoco.mju_mat2Quat(dori, new_ori.flatten())
-        self._data.mocap_quat[0] = dori
+        mujoco.mju_euler2Quat(new_ori, nori, 'xyz')
+        mujoco.mju_mulQuat(quat_des, new_ori, ori)
+        self._data.mocap_quat[0] = quat_des
 
         # Set gripper grasp.
         g = self._data.ctrl[self._gripper_ctrl_id] / 255
@@ -363,6 +361,6 @@ if __name__ == "__main__":
     env = ur5ePickCubeGymEnv(render_mode="human")
     env.reset()
     for i in range(100):
-        env.step(np.random.uniform(-1, 1, 4))
+        env.step(np.random.uniform(-1, 1, 7))
         env.render()
     env.close()

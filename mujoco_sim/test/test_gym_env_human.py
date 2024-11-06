@@ -12,7 +12,7 @@ from mujoco_sim.envs.wrappers import SpacemouseIntervention
 glfw.init()
 
 env = envs.ur5ePickCubeGymEnv(action_scale=(0.1,0.1, 1))
-# env = SpacemouseIntervention(env)
+env = SpacemouseIntervention(env)
 action_spec = env.action_space
 controller = env.controller
 
