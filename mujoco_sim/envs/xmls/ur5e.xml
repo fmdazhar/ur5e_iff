@@ -23,6 +23,14 @@
       </default>
       <default class="hande_collision">
         <geom type="mesh" contype="0" conaffinity="3" group="3" solimp="0.99 0.995 0.01" solref="0.01 1" priority="1" condim="3" friction="1 0.005 0.0001" margin="0.0001"/>
+        <default class="pad_box2">
+          <geom mass="0" type="box" pos="2.79852883e-02 -3.19443699e-05  3.65e-02" size="0.003 0.0105     0.01 " friction="0.7"
+            solimp="0.95 0.99 0.001" solref="0.004 1" priority="1" rgba="0.55 0.55 0.55 1"/>
+        </default>
+        <default class="pad_box1">
+          <geom mass="0" type="box" pos="-2.79852883e-02 3.19443699e-05  3.65e-02" size="0.003 0.0105     0.01 " friction="0.6"
+            solimp="0.95 0.99 0.001" solref="0.004 1" priority="1" rgba="0.45 0.45 0.45 1"/>
+        </default>
       </default>
       <default class="collision">
         <geom type="capsule" group="3"/>
@@ -151,15 +159,17 @@
                       <site name="pinch" pos="0 0 0.135" rgba="0 0 0 0.1" size="0.001" />
                       <body name="hande_left_finger" pos="0 0 0.099">
                         <inertial pos="0.02262 -0.00759 0.00738" quat="0.871952 0.0369732 -0.211073 0.440205" mass="0.03804" diaginertia="1.22763e-05 1.22763e-05 1.22763e-05" />
-                        <joint name="hande_left_finger_joint" class="hande_left_finger" pos="0 0 0" axis="1 0 0" />
+                        <joint name="hande_left_finger_joint" class="hande_left_finger" pos="0 0 0" axis="1 0 0" armature="0.001"/>
+                        <geom class="pad_box1" name="left_pad1"/>
                         <geom type="mesh" class="visual" rgba="0.4 0.4 0.4 1" mesh="left_finger" />
-                        <geom mesh="left_finger" class="hande_collision"/>
+                        <!-- <geom mesh="left_finger" class="hande_collision"/> -->
                       </body>
-                      <body name="hande_right_finger" pos="0 0 0.099">
+                      <body name="hande_right_finger" pos="0 0 0.099">  
                         <inertial pos="-0.02262 0.00759 0.00738" quat="0.871952 -0.0369732 0.211073 0.440205" mass="0.03804" diaginertia="1.22763e-05 1.22763e-05 1.22763e-05" />
-                        <joint name="hande_right_finger_joint" class="hande_right_finger" pos="0 0 0" axis="-1 0 0" />
+                        <joint name="hande_right_finger_joint" class="hande_right_finger" pos="0 0 0" axis="-1 0 0" armature="0.001"/>
+                        <geom class="pad_box2" name="right_pad1"/>
                         <geom type="mesh" class="visual" rgba="0.4 0.4 0.4 1" mesh="right_finger" />
-                        <geom mesh="right_finger" class="hande_collision"/>
+                        <!-- <geom mesh="right_finger" class="hande_collision"/> -->
                       </body>
                     </body>
                   </body>
