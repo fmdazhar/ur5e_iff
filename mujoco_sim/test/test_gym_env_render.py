@@ -11,8 +11,11 @@ env = gym.make("ur5ePickCubeVision-v0", render_mode="human", image_obs=True)
 action_spec = env.action_space
 
 
+
 def sample():
-    a = np.random.uniform(action_spec.low, action_spec.high, action_spec.shape)
+    # a = np.random.uniform(action_spec.low, action_spec.high, action_spec.shape)
+    a = np.zeros(action_spec.shape, dtype=action_spec.dtype)
+
     return a.astype(action_spec.dtype)
 
 

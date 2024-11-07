@@ -164,7 +164,10 @@ class SpacemouseIntervention(gym.ActionWrapper):
         - action: spacemouse action if nonezero; else, policy action
         """
         action = input2action(self.expert)
-        
+
+        if np.linalg.norm(action) > 0.001:
+            self.last_intervene = time.time()
+            
         if time.time() - self.last_intervene < 0.5:
             return action, True
 

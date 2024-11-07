@@ -4,11 +4,19 @@ from mujoco_sim.viewer.mujoco_viewer import MujocoViewer
 import numpy as np
 from mujoco_sim import envs
 from mujoco_sim.utils.viz import SliderController
+from mujoco_sim.envs.wrappers import SpacemouseIntervention
+
 
 
 # Initialize the environment and controller
-env = envs.ur5ePickCubeGymEnv(action_scale=(0.01, 1))
+env = envs.ur5ePickCubeGymEnv(action_scale=(0.01, 0.01, 1))
 action_spec = env.action_space
+
+# Define indices for UR5e DOF and gripper
+ur5e_dof_indices = env._ur5e_dof_ids
+gripper_dof_index = env._gripper_ctrl_id
+
+env = SpacemouseIntervention(env)
 controller = env.controller
 
 # # # Set controller parameters dynamically
@@ -39,7 +47,9 @@ slider_controller = SliderController(controller)
 
 # Sample a random action within the action space
 def sample():
-    return np.random.uniform(action_spec.low, action_spec.high, action_spec.shape).astype(action_spec.dtype)
+    a = np.zeros(action_spec.shape, dtype=action_spec.dtype)
+
+    return a
 
 # Environment data and variables
 m = env.model
@@ -53,9 +63,6 @@ last_sample_time = time.time()
 env.reset()
 viewer = MujocoViewer(m, d, hide_menus=True)
 
-# Define indices for UR5e DOF and gripper
-ur5e_dof_indices = env._ur5e_dof_ids
-gripper_dof_index = env._gripper_ctrl_id
 
 # Set up graph lines for UR5e DOF and gripper
 for joint_idx in ur5e_dof_indices:

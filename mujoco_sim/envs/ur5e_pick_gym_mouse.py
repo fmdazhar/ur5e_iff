@@ -19,8 +19,8 @@ from mujoco_sim.mujoco_gym_env import GymRenderingSpec, MujocoGymEnv
 _HERE = Path(__file__).parent
 _XML_PATH = _HERE / "xmls" / "ur5e_arena.xml"
 _UR5E_HOME = np.asarray((-1.5708, -1.5708, 1.5708, -1.5708, -1.5708, 0)) # UR5e home position
-_CARTESIAN_BOUNDS = np.asarray([[0.2, -0.2, 0.0], [0.4, 0.2, 0.5]])
-_SAMPLING_BOUNDS = np.asarray([[0.25, -0.25], [0.55, 0.25]])
+_CARTESIAN_BOUNDS = np.asarray([[0.2, -0.25, 0.0], [0.4, 0.25, 0.5]])
+_SAMPLING_BOUNDS = np.asarray([[0.25, -0.20], [0.35, 0.20]])
 
 
 class ur5ePickCubeGymEnv(MujocoGymEnv):

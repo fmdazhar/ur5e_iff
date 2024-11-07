@@ -20,8 +20,8 @@ class Controller:
 
         # Default parameters
         self.damping_ratio = 0.0
-        self.error_tolerance_pos = 0.01
-        self.error_tolerance_ori = 0.01
+        self.error_tolerance_pos = 0.001
+        self.error_tolerance_ori = 0.001
         self.max_pos_error = None
         self.max_ori_error = None
         self.method = "dls"
