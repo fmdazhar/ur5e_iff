@@ -14,9 +14,9 @@
     <worldbody> 
         <body name="connector_body" pos="0.35 0.0 .02" quat="0 0 1 0">
             <freejoint name="connector"/>
-            <geom pos="0 0 0" type="mesh" mesh="connector1_back" material="connector_mat"/>
-            <geom pos="0 0 0" type="mesh" mesh="connector1_center" material="connector_mat"/>
-            <geom pos="0 0 0" type="mesh" mesh="connector1_bottom" material="connector_mat"/>
+            <geom pos="0 0 0" type="mesh" mesh="connector1_back" material="connector_mat" density="100" friction="0.95 0.3 0.1" condim="4" solimp="0.998 0.998 0.001" solref="0.02 1"/>
+            <geom pos="0 0 0" type="mesh" mesh="connector1_center" material="connector_mat" density="100" friction="0.95 0.3 0.1" condim="4" solimp="0.998 0.998 0.001" solref="0.02 1"/>
+            <geom pos="0 0 0" type="mesh" mesh="connector1_bottom" material="connector_mat" density="100" friction="0.95 0.3 0.1" condim="4" solimp="0.998 0.998 0.001" solref="0.02 1"/>
             <site name="connector_front" type="sphere" pos="-0.008 0 0.0227" size="0.001 0.001 0.001" rgba="0 1 0 1"/>
             <site name="connector_back" type="sphere" pos="-0.008 0 0.0035" size="0.001 0.001 0.001" rgba="0.4 0.8 0.4 1"/>
         </body>

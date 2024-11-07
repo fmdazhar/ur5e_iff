@@ -20,7 +20,6 @@
     <material name="grid" texture="grid" texrepeat="2 2" texuniform="true" reflectance="0"/>
   </asset>
   <asset>
-  
   <!-- Define a material for the boundary visualization -->
   <material name="boundary_material" rgba="1 0 0 0.3" />
   </asset>
