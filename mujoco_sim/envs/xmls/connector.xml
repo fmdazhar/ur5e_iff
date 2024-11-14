@@ -3,7 +3,7 @@
 
     <asset>
         <material name="connector_mat" reflectance="0" rgba="0.824 0.435 0.227 1" shininess="0.5" specular="0"/>
-        <mesh name="connector1_back" file="connector1/connector1_back.stl" scale="0.001 0.001 0.001"/>
+        <mesh name="connector1_back" file="connector1/connector1_back.stl" scale="0.002 0.002 0.001"/>
         <mesh name="connector1_center" file="connector1/connector1_center.stl" scale="0.001 0.001 0.001"/>
         <mesh name="connector1_bottom" file="connector1/connector1_bottom.stl" scale="0.001 0.001 0.001"/>
         

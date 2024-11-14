@@ -26,10 +26,10 @@ def test_spacemouse():
     device.start_control()
     while True:
         # Get the input action from the SpaceMouse
-        action, grasp = input2action(device)
+        action = input2action(device)
 
         # Print the current action (position and rotation inputs)
-        print(f"Action: {action}, Grasp: {grasp}")
+        print(f"Action: {action}")
 
 
 if __name__ == "__main__":
@@ -37,7 +37,7 @@ if __name__ == "__main__":
     # Uncomment the desired function to test
 
     # Test keyboard inputs
-    test_keyboard()
+    # test_keyboard()
 
     # Test SpaceMouse inputs
-    # test_spacemouse()
+    test_spacemouse()

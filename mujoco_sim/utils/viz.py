@@ -18,8 +18,22 @@ class SliderController:
         x_offset = screen_width - window_width - 50
         self.root.geometry(f"{window_width}x{window_height}+{x_offset}+50")
 
+        # Create a canvas and a scrollbar
+        canvas = tk.Canvas(self.root, width=window_width)
+        scrollbar = tk.Scrollbar(self.root, orient="vertical", command=canvas.yview)
+        scrollbar.pack(side="right", fill="y")
+        canvas.pack(side="left", fill="both", expand=True)
+
+        # Create a frame inside the canvas to hold the sliders
+        self.frame = tk.Frame(canvas)
+
+        # Bind the frame to the scrollbar
+        self.frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+        canvas.create_window((0, 0), window=self.frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+
         self.method_var = tk.StringVar(value=self.controller.method)
-        method_selector = ttk.Combobox(self.root, textvariable=self.method_var, values=["dynamics", "pinv", "svd", "trans", "dls"], font=large_font)
+        method_selector = ttk.Combobox(self.frame, textvariable=self.method_var, values=["dynamics", "pinv", "svd", "trans", "dls"], font=large_font)
         method_selector.bind("<<ComboboxSelected>>", self.update_method)
         method_selector.pack(pady=20)
 
@@ -39,7 +53,8 @@ class SliderController:
             for i in range(3)
         ]
         
-        self.damping_ratio_slider = self.create_rescalable_slider("Damping Ratio", 0, 5, 0.1, self.controller.damping_ratio, self.update_damping_ratio)
+        self.trans_damping_ratio_slider = self.create_rescalable_slider("Trans Damping Ratio", 0, 5, 0.1, self.controller.trans_damping_ratio, self.update_trans_damping_ratio)
+        self.rot_damping_ratio_slider = self.create_rescalable_slider("Rot Damping Ratio", 0, 5, 0.1, self.controller.rot_damping_ratio, self.update_rot_damping_ratio)
         self.error_tolerance_pos_slider = self.create_rescalable_slider("Error Tolerance Pos", 0, 0.1, 0.001, self.controller.error_tolerance_pos, self.update_error_tolerance_pos)
         self.error_tolerance_ori_slider = self.create_rescalable_slider("Error Tolerance Ori", 0, 0.1, 0.001, self.controller.error_tolerance_ori, self.update_error_tolerance_ori)
         self.max_pos_error_slider = self.create_rescalable_slider("Max Pos Error", 0, 5, 0.1, self.controller.max_pos_error or 0, self.update_max_pos_error)
@@ -52,7 +67,7 @@ class SliderController:
         if initial > to:
             to = initial * 1.5  # Set a slightly higher upper bound for flexibility
         
-        slider = tk.Scale(self.root, from_=from_, to=to, resolution=resolution, label=label,
+        slider = tk.Scale(self.frame, from_=from_, to=to, resolution=resolution, label=label,
                         orient="horizontal", length=500)
         slider.config(font=font.Font(size=16, weight="bold"))
         slider.set(initial)
@@ -101,9 +116,13 @@ class SliderController:
         new_ori_gains = tuple(slider.get() for slider in self.ori_gains_sliders)
         self.controller.set_parameters(ori_gains=new_ori_gains)
 
-    def update_damping_ratio(self, _):
-        new_damping_ratio = self.damping_ratio_slider.get()
-        self.controller.set_parameters(damping_ratio=new_damping_ratio)
+    def update_trans_damping_ratio(self, _):
+        new_damping_ratio = self.trans_damping_ratio_slider.get()
+        self.controller.set_parameters(trans_damping_ratio=new_damping_ratio)
+
+    def update_rot_damping_ratio(self, _):
+        new_damping_ratio = self.rot_damping_ratio_slider.get()
+        self.controller.set_parameters(rot_damping_ratio=new_damping_ratio)
 
     def update_error_tolerance_pos(self, _):
         new_error_tolerance_pos = self.error_tolerance_pos_slider.get()

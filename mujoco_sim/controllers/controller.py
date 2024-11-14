@@ -19,14 +19,16 @@ class Controller:
         self.dof_ids = dof_ids
 
         # Default parameters
-        self.damping_ratio = 0.0
+        self.trans_damping_ratio = 0.996  # Separate damping ratio for translational control
+        self.rot_damping_ratio = 0.286  # Separate damping ratio for rotational control        
         self.error_tolerance_pos = 0.001
         self.error_tolerance_ori = 0.001
         self.max_pos_error = None
         self.max_ori_error = None
-        self.method = "dls"
-        self.pos_gains = (1, 1, 1)
-        self.ori_gains = (0.5, 0.5, 0.5)
+        self.method = "dynamics"
+        self.inertia_compensation = False
+        self.pos_gains = (100, 100, 100)
+        self.ori_gains = (7.5, 7.5, 7.5)
         self.pos_kd = None
         self.ori_kd = None
         self.max_angvel = 4
@@ -43,7 +45,8 @@ class Controller:
 
     def set_parameters(
         self,
-        damping_ratio: Optional[float] = None,
+        trans_damping_ratio: Optional[float] = None,
+        rot_damping_ratio: Optional[float] = None,        
         error_tolerance_pos: Optional[float] = None,
         error_tolerance_ori: Optional[float] = None,
         max_pos_error: Optional[float] = None,
@@ -54,9 +57,12 @@ class Controller:
         pos_kd: Optional[Union[Tuple[float, float, float], np.ndarray]] = None,
         ori_kd: Optional[Union[Tuple[float, float, float], np.ndarray]] = None,
         method: Optional[str] = None,
+        inertia_compensation: Optional[bool] = None,
     ):
-        if damping_ratio is not None:
-            self.damping_ratio = damping_ratio
+        if trans_damping_ratio is not None:
+            self.trans_damping_ratio = trans_damping_ratio
+        if rot_damping_ratio is not None:
+            self.rot_damping_ratio = rot_damping_ratio
         if error_tolerance_pos is not None:
             self.error_tolerance_pos = error_tolerance_pos
         if error_tolerance_ori is not None:
@@ -80,14 +86,15 @@ class Controller:
                 self.method = method
             else:
                 raise ValueError("Method must be one of 'dynamics', 'pinv', 'svd', 'trans', 'dls'")
+        if inertia_compensation is not None:
+            self.inertia_compensation = inertia_compensation
 
-
-    def compute_gains(self, gains, kd_values, method: str):
+    def compute_gains(self, gains, kd_values, method: str, damping_ratio: float):
 
         if method == "dynamics":
             kp = np.asarray(gains) 
             if kd_values is None:
-                kd = self.damping_ratio * 2 * np.sqrt(kp)
+                kd = damping_ratio * 2 * np.sqrt(kp)
             else:
                 kd = np.asarray(kd_values)
             
@@ -95,7 +102,7 @@ class Controller:
             kp = np.asarray(gains) / self.integration_dt
 
             if kd_values is None:
-                kd = self.damping_ratio * kp * self.integration_dt
+                kd = damping_ratio * kp * self.integration_dt
             else:
                 kd = np.asarray(kd_values)
 
@@ -109,8 +116,8 @@ class Controller:
         else:
             self.quat_des[:] = np.asarray(ori)
 
-        kp_kv_pos = self.compute_gains(self.pos_gains, self.pos_kd, self.method)
-        kp_kv_ori = self.compute_gains(self.ori_gains, self.ori_kd, self.method)
+        kp_kv_pos = self.compute_gains(self.pos_gains, self.pos_kd, self.method, self.trans_damping_ratio)
+        kp_kv_ori = self.compute_gains(self.ori_gains, self.ori_kd, self.method, self.rot_damping_ratio)
 
         ddx_max = self.max_pos_error if self.max_pos_error is not None else 0.0
         dw_max = self.max_ori_error if self.max_ori_error is not None else 0.0
@@ -169,29 +176,29 @@ class Controller:
         error = np.concatenate([ddx, dw], axis=0)
 
         if self.method == "dynamics":
-            mujoco.mj_fullM(self.model, self.M, self.data.qM)
-            M = self.M[self.dof_ids, :][:, self.dof_ids]
-            M_inv = np.linalg.inv(M)
+            # Mx_inv_v = J_v @ M_inv @ J_v.T
+            # Mx_inv_w = J_w @ M_inv @ J_w.T
 
-            Mx_inv_v = J_v @ M_inv @ J_v.T
-            Mx_inv_w = J_w @ M_inv @ J_w.T
-            # Compute Mx_v
-            if abs(np.linalg.det(Mx_inv_v)) >= 1e-2:
-                Mx_v = np.linalg.inv(Mx_inv_v)
+            # # Compute Mx_v
+            # if abs(np.linalg.det(Mx_inv_v)) >= 1e-2:
+            #     Mx_v = np.linalg.inv(Mx_inv_v)
+            # else:
+            #     Mx_v = np.linalg.pinv(Mx_inv_v, rcond=1e-2)
+
+            # # Compute Mx_w
+            # if abs(np.linalg.det(Mx_inv_w)) >= 1e-2:
+            #     Mx_w = np.linalg.inv(Mx_inv_w)
+            # else:
+            #     Mx_w = np.linalg.pinv(Mx_inv_w, rcond=1e-2)
+
+            if self.inertia_compensation:
+                mujoco.mj_fullM(self.model, self.M, self.data.qM)
+                M = self.M[self.dof_ids, :][:, self.dof_ids]
+                M_inv = np.linalg.inv(M)
+                ddq = M_inv @ J.T @ error
             else:
-                Mx_v = np.linalg.pinv(Mx_inv_v, rcond=1e-2)
+                ddq = J.T @ error  # Skip M_inv if inertia compensation is off
 
-            # Compute Mx_w
-            if abs(np.linalg.det(Mx_inv_w)) >= 1e-2:
-                Mx_w = np.linalg.inv(Mx_inv_w)
-            else:
-                Mx_w = np.linalg.pinv(Mx_inv_w, rcond=1e-2)
-
-            force = Mx_v @ ddx
-            torque = Mx_w @ dw
-            wrench = np.concatenate([force, torque], axis=0)
-
-            ddq = M_inv @ J.T @ wrench
             dq += ddq * self.integration_dt
 
         elif self.method == "pinv":

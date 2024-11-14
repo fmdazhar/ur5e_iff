@@ -23,7 +23,7 @@ screen = pygame.display.set_mode((100, 100))  # Dummy window for capturing input
 def handle_keyboard_input():
     connector_joint_id = model.joint('connector').id
     current_pos = data.jnt('connector').qpos.copy()  # Extract current position
-    print(current_pos)
+    # print(current_pos)
 
     # Handle key presses
     keys = pygame.key.get_pressed()
@@ -43,6 +43,8 @@ def handle_keyboard_input():
     # Update position in qpos
     data.jnt("connector").qpos = current_pos
     data.qvel[connector_joint_id] = 0  # Reset velocity
+    data.qacc[connector_joint_id] = 0  # Reset acceleration
+    data.qfrc_applied[connector_joint_id] = 0  # Reset any applied forces
     mujoco.mj_forward(model, data)  # Update simulation state after position change
 
 # Set up the viewer

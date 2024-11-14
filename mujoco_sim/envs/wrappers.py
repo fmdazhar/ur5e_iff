@@ -151,7 +151,16 @@ class SpacemouseIntervention(gym.ActionWrapper):
     def __init__(self, env):
         super().__init__(env)
 
-        self.expert = Keyboard()
+        try:
+            # Attempt to initialize the SpaceMouse
+            self.expert = SpaceMouse(pos_sensitivity=0.1, rot_sensitivity=0.2)
+            self.expert.start_control()
+            print("SpaceMouse connected successfully.")
+        except OSError:
+            # If SpaceMouse is not found, fall back to Keyboard
+            print("SpaceMouse not found, falling back to Keyboard.")
+            self.expert = Keyboard()
+
         self.expert.start_control()
         self.last_intervene = 0
 

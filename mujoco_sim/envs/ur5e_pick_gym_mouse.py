@@ -6,12 +6,12 @@ import mujoco
 import numpy as np
 from gym import spaces
 
-try:
-    import mujoco_py
-except ImportError as e:
-    MUJOCO_PY_IMPORT_ERROR = e
-else:
-    MUJOCO_PY_IMPORT_ERROR = None
+# try:
+#     import mujoco_py
+# except ImportError as e:
+#     MUJOCO_PY_IMPORT_ERROR = e
+# else:
+#     MUJOCO_PY_IMPORT_ERROR = None
 
 from mujoco_sim.controllers import Controller
 from mujoco_sim.mujoco_gym_env import GymRenderingSpec, MujocoGymEnv
@@ -19,7 +19,7 @@ from mujoco_sim.mujoco_gym_env import GymRenderingSpec, MujocoGymEnv
 _HERE = Path(__file__).parent
 _XML_PATH = _HERE / "xmls" / "ur5e_arena.xml"
 _UR5E_HOME = np.asarray((-1.5708, -1.5708, 1.5708, -1.5708, -1.5708, 0)) # UR5e home position
-_CARTESIAN_BOUNDS = np.asarray([[0.2, -0.25, 0.0], [0.4, 0.25, 0.5]])
+_CARTESIAN_BOUNDS = np.asarray([[0.2, -0.3, 0.0], [0.4, 0.3, 0.5]])
 _SAMPLING_BOUNDS = np.asarray([[0.25, -0.20], [0.35, 0.20]])
 
 
@@ -100,6 +100,13 @@ class ur5ePickCubeGymEnv(MujocoGymEnv):
         self._block_z = self._model.geom("block").size[2]
         self._connector_id = self._model.body("connector_body").id
         self._connector_z = self._data.body(self._connector_id).xipos[2]
+
+        # Updated identifiers for the geometries and sensors
+        self._floor_geom = self._model.geom("floor").id
+        self._left_finger_geom = self._model.geom("left_pad1").id
+        self._right_finger_geom = self._model.geom("right_pad1").id
+        self._hand_geom = self._model.geom("hande_base").id
+        self._block_geom = self._model.geom("block").id
 
         self.controller = Controller(
         model=self._model,
@@ -277,10 +284,6 @@ class ur5ePickCubeGymEnv(MujocoGymEnv):
             #     mujoco.mj_jac(self._model, self._data, jac, None, self._data.body(i).xipos, i)
             #     q_weight = jac.T @ body_weight
             #     self._data.qfrc_applied[:] -= q_weight
-       
-            # # Integrate joint velocities to obtain joint positions.
-            # q = self._data.qpos.copy()
-            # self._data.ctrl[self._ur5e_ctrl_ids] = q[self._ur5e_dof_ids]
 
             mujoco.mj_step(self._model, self._data)
             
@@ -298,8 +301,17 @@ class ur5ePickCubeGymEnv(MujocoGymEnv):
                 self._viewer.render(render_mode="rgb_array")
             )
         return rendered_frames
-
-    # Helper methods.
+    
+    def _get_contact_info(self, geom1_id: int, geom2_id: int) -> Tuple[float, np.ndarray]:
+        """Get distance and normal for contact between geom1 and geom2."""
+        # Iterate through contacts
+        for contact in self._data.contact[:self._data.ncon]:
+            # Check if contact involves geom1 and geom2
+            if {contact.geom1, contact.geom2} == {geom1_id, geom2_id}:
+                distance = contact.dist
+                normal = contact.frame[:3]
+                return distance, normal
+        return float('inf'), np.zeros(3)  # No contact
 
     def _compute_observation(self) -> dict:
         obs = {}
@@ -350,12 +362,31 @@ class ur5ePickCubeGymEnv(MujocoGymEnv):
         block_pos = self._data.sensor("block_pos").data
         tcp_pos = self._data.sensor("hande/pinch_pos").data
         dist = np.linalg.norm(block_pos - tcp_pos)
-        r_close = np.exp(-20 * dist)
-        r_lift = (block_pos[2] - self._z_init) / (self._z_success - self._z_init)
-        r_lift = np.clip(r_lift, 0.0, 1.0)
-        rew = 0.3 * r_close + 0.7 * r_lift
-        return rew
+            
+        # 1. box_target: reward for the block approaching a target position
+        target_pos = np.array([0.3, 0.0, 0.3])  # Replace with actual target position if available
+        box_target = 1 - np.tanh(5 * np.linalg.norm(target_pos - block_pos))
+        
+        # 2. gripper_box: reward for the gripper being close to the block
+        gripper_box = 1 - np.tanh(5 * dist)
+        
+        # 3. no_floor_collision: reward for not colliding with the floor
+        left_dist, _ = self._get_contact_info(self._left_finger_geom, self._floor_geom)
+        right_dist, _ = self._get_contact_info(self._right_finger_geom, self._floor_geom)
+        hand_dist, _ = self._get_contact_info(self._hand_geom, self._floor_geom)
+        floor_collision = any(dist < 0 for dist in [left_dist, right_dist, hand_dist])
+        no_floor_collision = 1 - floor_collision
 
+        # print(f"box_target: {box_target}, gripper_box: {gripper_box}, no_floor_collision: {no_floor_collision}")
+        
+        # Combine rewards with scaling
+        rew = (
+            8.0 * box_target + 
+            4.0 * gripper_box + 
+            0.25 * no_floor_collision
+        )
+
+        return rew
 
 if __name__ == "__main__":
     env = ur5ePickCubeGymEnv(render_mode="human")

@@ -31,17 +31,17 @@ controller = env.controller
 #     method="dynamics"
 # )
 
-# Set controller parameters dynamically
-controller.set_parameters(
-    damping_ratio=0.0,
-    error_tolerance_pos=0.001,
-    error_tolerance_ori=0.001,
-    pos_gains=(1, 1, 1),
-    ori_gains=(0.5, 0.5, 0.5),
-    # max_pos_error = 300,
-    # max_ori_error = 300,
-    method="dls"
-)
+# # Set controller parameters dynamically
+# controller.set_parameters(
+#     damping_ratio=1.0,
+#     error_tolerance_pos=0.001,
+#     error_tolerance_ori=0.001,
+#     pos_gains=(1, 1, 1),
+#     ori_gains=(0.5, 0.5, 0.5),
+#     # max_pos_error = 300,
+#     # max_ori_error = 300,
+#     method="dynamics"
+# )
 
 slider_controller = SliderController(controller)
 

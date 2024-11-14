@@ -199,6 +199,7 @@ class SpaceMouse(Device):
         self._display_controls()
 
         self.single_click_and_hold = False
+        self._control_gripper_state = 0.0
 
         self._control = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self._reset_state = 0
@@ -222,8 +223,8 @@ class SpaceMouse(Device):
 
         print("")
         print_command("Control", "Command")
-        print_command("Right button", "reset simulation")
-        print_command("Left button (hold)", "close gripper")
+        print_command("Button 1", "close simulation")
+        print_command("Button 2", "open gripper")
         print_command("Move mouse laterally", "move arm horizontally in x-y plane")
         print_command("Move mouse vertically", "move arm vertically")
         print_command("Twist mouse about an axis", "rotate arm about a corresponding axis")
@@ -241,6 +242,7 @@ class SpaceMouse(Device):
         self._control = np.zeros(6)
         # Reset grasp
         self.single_click_and_hold = False
+        self._control_gripper_state = 0.0
 
     def start_control(self):
         """
@@ -330,22 +332,32 @@ class SpaceMouse(Device):
 
                 if d[0] == 3:  ## readings from the side buttons
 
-                    # press left button
+                    # # press left button
+                    # if d[1] == 1:
+                    #     t_click = time.time()
+                    #     elapsed_time = t_click - t_last_click
+                    #     t_last_click = t_click
+                    #     self.single_click_and_hold = False
+
+                    # # release left button
+                    # if d[1] == 0:
+                    #     self.single_click_and_hold = False
+
+                    # # right button is for reset
+                    # if d[1] == 2:
+                    #     self._reset_state = 1
+                    #     self._enabled = False
+                    #     self._reset_internal_state()
+
+                    # left button is for opening the gripper
                     if d[1] == 1:
-                        t_click = time.time()
-                        elapsed_time = t_click - t_last_click
-                        t_last_click = t_click
-                        self.single_click_and_hold = True
+                        self._control_gripper_state = 1.0  # Gripper open
 
-                    # release left button
-                    if d[1] == 0:
-                        self.single_click_and_hold = False
-
-                    # right button is for reset
+                    # right button is for closing the gripper
                     if d[1] == 2:
-                        self._reset_state = 1
-                        self._enabled = False
-                        self._reset_internal_state()
+                        self._control_gripper_state = 0.0  # Gripper closed
+
+
 
     @property
     def control(self):
@@ -365,14 +377,15 @@ class SpaceMouse(Device):
         Returns:
             float: Whether we're using single click and hold or not
         """
-        if self.single_click_and_hold:
-            return 1.0
-        return 0
+        # if self.single_click_and_hold:
+        #     return 1.0
+        # return 0
+        return self._control_gripper_state
 
 
 if __name__ == "__main__":
 
     space_mouse = SpaceMouse()
-    for i in range(100):
+    for i in range(1000):
         print(space_mouse.control, space_mouse.control_gripper)
         time.sleep(0.02)
