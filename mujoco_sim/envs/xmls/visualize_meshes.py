@@ -1,11 +1,36 @@
 import trimesh
+import os
+import time
 
-# Load and visualize each mesh separately
-connector_back = trimesh.load_mesh('connector1/connector1_back.stl')
-# connector_center = trimesh.load_mesh('connector1/connector1_center.stl')
-# connector_bottom = trimesh.load_mesh('connector1/connector1_bottom.stl')
+def visualize_stl_files_in_folder(folder_path, delay=2):
+    # List all .stl files in the specified folder
+    stl_files = [f for f in os.listdir(folder_path) if f.endswith('.stl')]
+    
+    # Sort files alphabetically (optional)
+    stl_files.sort()
 
-# Display each mesh separately
-connector_back.show(title='Connector Back')
-# connector_center.show(title='Connector Center')
-# connector_bottom.show(title='Connector Bottom')
+    for stl_file in stl_files:
+        # Construct full file path
+        file_path = os.path.join(folder_path, stl_file)
+        
+        # Load the STL file
+        mesh = trimesh.load_mesh(file_path)
+        
+        # Display the mesh with title
+        print(f"Displaying: {stl_file}")
+        mesh.show(title=stl_file)
+        
+
+if __name__ == "__main__":
+    folder_path = "port1"  # Replace with your folder path
+    visualize_stl_files_in_folder(folder_path)
+
+
+
+# import trimesh
+
+# # Load and visualize each mesh separately
+# port1 = trimesh.load_mesh('port1/port1_back1.stl')
+
+# # Display each mesh separately
+# port1.show(title='port1')

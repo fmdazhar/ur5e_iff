@@ -17,7 +17,7 @@ class Keyboard(Device):
         rot_sensitivity (float): Magnitude of scale input rotation commands scaling
     """
 
-    def __init__(self, pos_sensitivity=0.01, rot_sensitivity=5):
+    def __init__(self, pos_sensitivity=1, rot_sensitivity=1):
 
         self._display_controls()
         self._reset_internal_state()
@@ -51,7 +51,7 @@ class Keyboard(Device):
         print_command("spacebar", "toggle gripper (open/close)")
         print_command("w-a-s-d", "move arm horizontally in x-y plane")
         print_command("r-f", "move arm vertically")
-        print_command("z-x", "rotate arm about x-axis")
+        print_command("y-x", "rotate arm about x-axis")
         print_command("t-g", "rotate arm about y-axis")
         print_command("c-v", "rotate arm about z-axis")
         print("")
@@ -120,7 +120,7 @@ class Keyboard(Device):
                 self.pos[2] += self._pos_step * self.pos_sensitivity  # inc z
 
             # controls for moving orientation
-            elif key.char == "z":
+            elif key.char == "y":
                 drot = rotation_matrix(angle=0.1 * self.rot_sensitivity, direction=[1.0, 0.0, 0.0])[:3, :3]
                 self.rotation = self.rotation.dot(drot)  # rotates x
                 self.raw_drotation[1] -= 0.1 * self.rot_sensitivity

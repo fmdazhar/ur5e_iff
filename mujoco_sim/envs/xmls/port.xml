@@ -1,24 +1,26 @@
 <mujoco model="port">
+    <!-- <include file="scene.xml"/> -->
+
     <compiler angle="radian" />
 
     <asset>
-        <mesh name="port1_bottom" file="port1/port1_bottom.stl" scale="0.002 0.002 0.002" />
-        <mesh name="port1_left1" file="port1/port1_left1.stl" scale="0.002 0.002 0.002" />
-        <mesh name="port1_right1" file="port1/port1_right1.stl" scale="0.002 0.002 0.002" />
-        <mesh name="port1_left2" file="port1/port1_left2.stl" scale="0.002 0.002 0.002" />
-        <mesh name="port1_right2" file="port1/port1_right2.stl" scale="0.002 0.002 0.002" />
-        <mesh name="port1_left3" file="port1/port1_left3.stl" scale="0.002 0.002 0.002" />
-        <mesh name="port1_right3" file="port1/port1_right3.stl" scale="0.002 0.002 0.002" />
-        <mesh name="port1_top" file="port1/port1_top.stl" scale="0.002 0.002 0.002" />
-        <mesh name="port1_back1" file="port1/port1_back1.stl" scale="0.002 0.002 0.002" />
-        <mesh name="port1_back2" file="port1/port1_back2.stl" scale="0.002 0.002 0.002" />
+        <mesh name="port1_bottom" file="port1/port1_bottom.stl" scale="0.001 0.001 0.001" />
+        <mesh name="port1_left1" file="port1/port1_left1.stl" scale="0.001 0.001 0.001" />
+        <mesh name="port1_right1" file="port1/port1_right1.stl" scale="0.001 0.001 0.001" />
+        <mesh name="port1_left2" file="port1/port1_left2.stl" scale="0.001 0.001 0.001" />
+        <mesh name="port1_right2" file="port1/port1_right2.stl" scale="0.001 0.001 0.001" />
+        <mesh name="port1_left3" file="port1/port1_left3.stl" scale="0.001 0.001 0.001" />
+        <mesh name="port1_right3" file="port1/port1_right3.stl" scale="0.001 0.001 0.001" />
+        <mesh name="port1_top" file="port1/port1_top.stl" scale="0.001 0.001 0.001" />
+        <mesh name="port1_back1" file="port1/port1_back1.stl" scale="0.001 0.001 0.001" />
+        <mesh name="port1_back2" file="port1/port1_back2.stl" scale="0.001 0.001 0.001" />
 
-        <mesh name="port2_top" file="port1/port2-Plate_Top.stl" scale="0.002 0.002 0.002" />
-        <mesh name="port2_bottom" file="port1/port2-Plate_Bottom.stl" scale="0.002 0.002 0.002" />
-        <mesh name="port2_left1" file="port1/port2-Plate_Left1.stl" scale="0.002 0.002 0.002" />
-        <mesh name="port2_left2" file="port1/port2-Plate_Left2.stl" scale="0.002 0.002 0.002" />
-        <mesh name="port2_right1" file="port1/port2-Plate_Right1.stl" scale="0.002 0.002 0.002" />
-        <mesh name="port2_right2" file="port1/port2-Plate_Right2.stl" scale="0.002 0.002 0.002" />
+        <mesh name="port2_top" file="port1/port2-Plate_Top.stl" scale="0.001 0.001 0.001" />
+        <mesh name="port2_bottom" file="port1/port2-Plate_Bottom.stl" scale="0.001 0.001 0.001" />
+        <mesh name="port2_left1" file="port1/port2-Plate_Left1.stl" scale="0.001 0.001 0.001" />
+        <mesh name="port2_left2" file="port1/port2-Plate_Left2.stl" scale="0.001 0.001 0.001" />
+        <mesh name="port2_right1" file="port1/port2-Plate_Right1.stl" scale="0.001 0.001 0.001" />
+        <mesh name="port2_right2" file="port1/port2-Plate_Right2.stl" scale="0.001 0.001 0.001" />
 
         <!-- White background texture -->
         <texture builtin="flat" height="256" width="256" rgb1="1 1 1" rgb2="1 1 1" type="skybox"/>
@@ -28,11 +30,12 @@
 
     
     <worldbody>
-        <body pos="0 0 0" name="port_adapter">
+        <body pos="0.35 0.25 0.0" name="port_adapter">
             <inertial pos="0. 0. -0.0115" quat="1 0 0 0" mass="3.88125" diaginertia="0.02038594 0.02038594 0.04042969"/>
-            <geom pos="0.0 0.0 -0.006" size="0.075 0.075 0.006" type="box" density="2700" material="table_mat" />
+            <geom pos="0.0 0.0 0" size="0.075 0.075 0.006" type="box" density="2700" material="table_mat" />
       
-            <body name="port" pos="0.35 0.25 0.4" quat="0.5 -0.5 0.5 0.5 ">
+            <!-- <body name="port" pos="0.35 0.25 0.4" quat="0.5 -0.5 0.5 0.5 "> -->
+            <body name="port1" pos="0.008 0 0.03" quat="0 1 0 0">
                 <geom pos="0 0 0" type="mesh" mesh="port1_bottom" material="table_mat"/>
                 <geom pos="0 0 0" type="mesh" mesh="port1_left1" material="table_mat"/>
                 <geom pos="0 0 0" type="mesh" mesh="port1_right1" material="table_mat"/>
@@ -51,8 +54,8 @@
                 <geom pos="0 0 0" type="mesh" mesh="port2_right1"  material="port_mat"/>
                 <geom pos="0 0 0" type="mesh" mesh="port2_right2"  material="port_mat"/>
 
-                <site name="port_bottom" type="sphere" pos="-0.008 0 0.0192" size="0.002 0.002 0.002" rgba="1 0 0 1"/>
-                <site name="port_top" type="sphere" pos="-0.008 0 0" size="0.002 0.002 0.002" rgba="0.8 0.4 0.4 1"/>
+                <site name="port_bottom" type="sphere" pos="-0.008 0 0.0192" size="0.001 0.001 0.001" rgba="1 0 0 1"/>
+                <site name="port_top" type="sphere" pos="-0.008 0 0" size="0.001 0.001 0.001" rgba="0.8 0.4 0.4 1"/>
             </body>
         </body>
     </worldbody>

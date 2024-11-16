@@ -6,13 +6,6 @@ import mujoco
 import numpy as np
 from gym import spaces
 
-# try:
-#     import mujoco_py
-# except ImportError as e:
-#     MUJOCO_PY_IMPORT_ERROR = e
-# else:
-#     MUJOCO_PY_IMPORT_ERROR = None
-
 from mujoco_sim.controllers import Controller
 from mujoco_sim.mujoco_gym_env import GymRenderingSpec, MujocoGymEnv
 
@@ -79,34 +72,15 @@ class ur5ePickCubeGymEnv(MujocoGymEnv):
             self._model.actuator("wrist_2").id,           # Actuator for Joint 5
             self._model.actuator("wrist_3").id            # Actuator for Joint 6
         ])
-        # body_names = [
-        #         # "base",
-        #         "shoulder_link",
-        #         "upper_arm_link",
-        #         "forearm_link",
-        #         "wrist_1_link",
-        #         "wrist_2_link",
-        #         "wrist_3_link",
-        #         # "tool0_link",
-        #         # "hande",
-        #         # "hande_left_finger",
-        #         # "hande_right_finger",
-        #         ]
-        # self.body_ids = [self._model.body(name).id for name in body_names]
-        
         self._gripper_ctrl_id = self._model.actuator("hande_fingers_actuator").id
         self._pinch_site_id = self._model.site("pinch").id
-        # print(self._pinch_site_id)
         self._block_z = self._model.geom("block").size[2]
-        self._connector_id = self._model.body("connector_body").id
-        self._connector_z = self._data.body(self._connector_id).xipos[2]
-
+        
         # Updated identifiers for the geometries and sensors
         self._floor_geom = self._model.geom("floor").id
         self._left_finger_geom = self._model.geom("left_pad1").id
         self._right_finger_geom = self._model.geom("right_pad1").id
         self._hand_geom = self._model.geom("hande_base").id
-        self._block_geom = self._model.geom("block").id
 
         self.controller = Controller(
         model=self._model,
@@ -123,6 +97,9 @@ class ur5ePickCubeGymEnv(MujocoGymEnv):
                         "ur5e/tcp_pos": spaces.Box(
                             -np.inf, np.inf, shape=(3,), dtype=np.float32
                         ),
+                        "ur5e/tcp_ori": spaces.Box(
+                            -np.inf, np.inf, shape=(3,), dtype=np.float32
+                        ),
                         "ur5e/tcp_vel": spaces.Box(
                             -np.inf, np.inf, shape=(3,), dtype=np.float32
                         ),
@@ -132,7 +109,8 @@ class ur5ePickCubeGymEnv(MujocoGymEnv):
                         # "ur5e/joint_pos": spaces.Box(-np.inf, np.inf, shape=(7,), dtype=np.float32),
                         # "ur5e/joint_vel": spaces.Box(-np.inf, np.inf, shape=(7,), dtype=np.float32),
                         # "ur5e/joint_torque": specs.Array(shape=(21,), dtype=np.float32),
-                        # "ur5e/wrist_force": specs.Array(shape=(3,), dtype=np.float32),
+                        "ur5e/wrist_force": spaces.Box(-np.inf, np.inf, shape=(3,), dtype=np.float32),
+                        "ur5e/wrist_torque": spaces.Box(-np.inf, np.inf, shape=(3,), dtype=np.float32),
                         "block_pos": spaces.Box(
                             -np.inf, np.inf, shape=(3,), dtype=np.float32
                         ),
@@ -149,12 +127,19 @@ class ur5ePickCubeGymEnv(MujocoGymEnv):
                             "ur5e/tcp_pos": spaces.Box(
                                 -np.inf, np.inf, shape=(3,), dtype=np.float32
                             ),
+                            "ur5e/tcp_ori": spaces.Box(
+                                -np.inf, np.inf, shape=(3,), dtype=np.float32
+                            ),
                             "ur5e/tcp_vel": spaces.Box(
                                 -np.inf, np.inf, shape=(3,), dtype=np.float32
                             ),
                             "ur5e/gripper_pos": spaces.Box(
                                 -np.inf, np.inf, shape=(1,), dtype=np.float32
                             ),
+                            "ur5e/wrist_force": spaces.Box(
+                                -np.inf, np.inf, shape=(3,), dtype=np.float32),
+                            "ur5e/wrist_torque": spaces.Box(
+                                -np.inf, np.inf, shape=(3,), dtype=np.float32),
                         }
                     ),
                     "images": gym.spaces.Dict(
@@ -212,14 +197,10 @@ class ur5ePickCubeGymEnv(MujocoGymEnv):
         block_xy = np.random.uniform(*_SAMPLING_BOUNDS)
         self._data.jnt("block").qpos[:3] = (*block_xy, self._block_z)
 
-        connector_xy = np.random.uniform(*_SAMPLING_BOUNDS)
-        self._data.jnt("connector").qpos[:3] = (*connector_xy, self._connector_z)
-
         mujoco.mj_forward(self._model, self._data)
 
         # Cache the initial block height.
-        self._z_init = self._data.sensor("block_pos").data[2]
-        self._z_success = self._z_init + 0.2
+        self._success = np.array([0.3, 0.0, 0.3])  # Replace with actual target position if available
 
         obs = self._compute_observation()
         return obs, {}
@@ -239,7 +220,7 @@ class ur5ePickCubeGymEnv(MujocoGymEnv):
             truncated: bool,
             info: dict[str, Any]
         """
-        x, y, z, grasp, qx, qy, qz = action
+        x, y, z, qx, qy, qz, grasp = action
 
         # Set the position.
         pos = self._data.mocap_pos[0].copy()
@@ -320,6 +301,11 @@ class ur5ePickCubeGymEnv(MujocoGymEnv):
         tcp_pos = self._data.sensor("hande/pinch_pos").data
         obs["state"]["ur5e/tcp_pos"] = tcp_pos.astype(np.float32)
 
+        tcp_ori_quat = self._data.sensor("hande/pinch_quat").data
+        tcp_ori_euler = np.zeros(3)
+        mujoco.mju_quat2Vel(tcp_ori_euler, tcp_ori_quat, 1.0)
+        obs["state"]["ur5e/tcp_ori"] = tcp_ori_euler.astype(np.float32)
+
         tcp_vel = self._data.sensor("hande/pinch_vel").data
         obs["state"]["ur5e/tcp_vel"] = tcp_vel.astype(np.float32)
 
@@ -343,8 +329,11 @@ class ur5ePickCubeGymEnv(MujocoGymEnv):
         # ).ravel()
         # obs["ur5e/joint_torque"] = symlog(joint_torque.astype(np.float32))
 
-        # wrist_force = self._data.sensor("ur5e/wrist_force").data.astype(np.float32)
-        # obs["ur5e/wrist_force"] = symlog(wrist_force.astype(np.float32))
+        wrist_force = self._data.sensor("ur5e/wrist_force").data.astype(np.float32)
+        obs["state"]["ur5e/wrist_force"] = wrist_force.astype(np.float32)
+
+        wrist_torque = self._data.sensor("ur5e/wrist_torque").data.astype(np.float32)
+        obs["state"]["ur5e/wrist_torque"] = wrist_torque.astype(np.float32)
 
         if self.image_obs:
             obs["images"] = {}
@@ -359,13 +348,12 @@ class ur5ePickCubeGymEnv(MujocoGymEnv):
         return obs
 
     def _compute_reward(self) -> float:
-        block_pos = self._data.sensor("block_pos").data
+        block_pos = self._data.sensor("block_pos").data[:3]
         tcp_pos = self._data.sensor("hande/pinch_pos").data
         dist = np.linalg.norm(block_pos - tcp_pos)
             
         # 1. box_target: reward for the block approaching a target position
-        target_pos = np.array([0.3, 0.0, 0.3])  # Replace with actual target position if available
-        box_target = 1 - np.tanh(5 * np.linalg.norm(target_pos - block_pos))
+        box_target = 1 - np.tanh(5 * np.linalg.norm(self._success - block_pos))
         
         # 2. gripper_box: reward for the gripper being close to the block
         gripper_box = 1 - np.tanh(5 * dist)

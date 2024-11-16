@@ -125,6 +125,48 @@ class ZOnlyWrapper(gym.ObservationWrapper):
         )
         return observation
 
+import gym
+from gym.spaces import flatten_space, flatten
+
+
+class ObsWrapper(gym.ObservationWrapper):
+    """
+    This observation wrapper treats the observation space as a dictionary
+    of a flattened state space and optionally the images, if available.
+    """
+
+    def __init__(self, env):
+        super().__init__(env)
+        # Flatten the state observation space
+        state_space = flatten_space(self.env.observation_space["state"])
+
+        if "images" in self.env.observation_space:
+            # If images are part of the observation space
+            self.observation_space = gym.spaces.Dict(
+                {
+                    "state": state_space,
+                    "images": self.env.observation_space["images"],
+                }
+            )
+            self.include_images = True
+        else:
+            # If no image observations
+            self.observation_space = gym.spaces.Dict(
+                {
+                    "state": state_space,
+                }
+            )
+            self.include_images = False
+
+    def observation(self, obs):
+        # Flatten the state observation
+        obs = {
+            "state": flatten(self.env.observation_space["state"], obs["state"]),
+        }
+        # Include images only if available
+        if self.include_images:
+            obs["images"] = obs["images"]
+        return obs
 
 class Quat2EulerWrapper(gym.ObservationWrapper):
     """
@@ -145,6 +187,28 @@ class Quat2EulerWrapper(gym.ObservationWrapper):
             (tcp_pose[:3], quat_2_euler(tcp_pose[3:]))
         )
         return observation
+class GripperCloseEnv(gym.ActionWrapper):
+    """
+    Use this wrapper to task that requires the gripper to be closed
+    """
+
+    def __init__(self, env):
+        super().__init__(env)
+        ub = self.env.action_space
+        assert ub.shape == (7,)
+        self.action_space = Box(ub.low[:6], ub.high[:6])
+
+    def action(self, action: np.ndarray) -> np.ndarray:
+        new_action = np.zeros((7,), dtype=np.float32)
+        new_action[:6] = action.copy()
+        return new_action
+
+    def step(self, action):
+        new_action = self.action(action)
+        obs, rew, done, truncated, info = self.env.step(new_action)
+        if "intervene_action" in info:
+            info["intervene_action"] = info["intervene_action"][:6]
+        return obs, rew, done, truncated, info
 
 
 class SpacemouseIntervention(gym.ActionWrapper):
@@ -159,7 +223,7 @@ class SpacemouseIntervention(gym.ActionWrapper):
         except OSError:
             # If SpaceMouse is not found, fall back to Keyboard
             print("SpaceMouse not found, falling back to Keyboard.")
-            self.expert = Keyboard()
+            self.expert = Keyboard(pos_sensitivity=0.03, rot_sensitivity=5)
 
         self.expert.start_control()
         self.last_intervene = 0

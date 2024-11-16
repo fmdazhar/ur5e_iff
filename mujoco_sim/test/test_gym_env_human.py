@@ -5,7 +5,7 @@ import numpy as np
 import glfw
 
 from mujoco_sim import envs
-from mujoco_sim.envs.wrappers import SpacemouseIntervention
+from mujoco_sim.envs.wrappers import SpacemouseIntervention, ZOnlyWrapper, ObsWrapper, GripperCloseEnv
 
 
 # glfw init
@@ -13,6 +13,10 @@ glfw.init()
 
 env = envs.ur5ePickCubeGymEnv(action_scale=(0.1,0.1, 1))
 env = SpacemouseIntervention(env)
+env = GripperCloseEnv(env)
+env = ObsWrapper(env)
+env = ZOnlyWrapper(env)
+
 action_spec = env.action_space
 controller = env.controller
 
@@ -26,13 +30,16 @@ m = env.model
 d = env.data
 
 reset = False
-KEY_SPACE = 32
+# KEY_SPACE = 32
+KEY_SPACE = 92
+
 action = sample()  # Generate an initial action sample
 last_sample_time = time.time()  # Track the last sample time
 
 
 
 def key_callback(keycode):
+    # print(f"Key pressed: {keycode}")
     if keycode == KEY_SPACE:
         global reset
         reset = True
@@ -40,7 +47,7 @@ def key_callback(keycode):
 
 env.reset()
 start_time = time.time()
-with mujoco.viewer.launch_passive(m, d, key_callback=key_callback) as viewer:
+with mujoco.viewer.launch_passive(m, d, key_callback=key_callback, show_right_ui= False) as viewer:
     start = time.time()
     while viewer.is_running():
         if reset:

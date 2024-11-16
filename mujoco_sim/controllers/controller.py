@@ -27,8 +27,8 @@ class Controller:
         self.max_ori_error = None
         self.method = "dynamics"
         self.inertia_compensation = False
-        self.pos_gains = (100, 100, 100)
-        self.ori_gains = (7.5, 7.5, 7.5)
+        self.pos_gains = (10, 10, 10)
+        self.ori_gains = tuple(gain * 1/8 for gain in self.pos_gains)   
         self.pos_kd = None
         self.ori_kd = None
         self.max_angvel = 4

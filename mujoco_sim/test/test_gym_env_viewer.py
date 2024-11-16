@@ -6,10 +6,8 @@ from mujoco_sim import envs
 from mujoco_sim.utils.viz import SliderController
 from mujoco_sim.envs.wrappers import SpacemouseIntervention
 
-
-
 # Initialize the environment and controller
-env = envs.ur5ePickCubeGymEnv(action_scale=(0.01, 0.01, 1))
+env = envs.ur5ePickCubeGymEnv(image_obs=False, action_scale=(0.01, 0.01, 1))
 action_spec = env.action_space
 
 # Define indices for UR5e DOF and gripper
@@ -236,10 +234,10 @@ while viewer.is_alive:
 
         # Update target and current orientation lines
         target_quat = d.mocap_quat[0]
-        current_rot_mat = d.site_xmat[controller.site_id]
-        
         target = np.zeros(3)
         mujoco.mju_quat2Vel(target, target_quat, 1)
+
+        current_rot_mat = d.site_xmat[controller.site_id]
         current = np.zeros(3)
         site_quat = np.zeros(4)
         mujoco.mju_mat2Quat(site_quat, current_rot_mat)

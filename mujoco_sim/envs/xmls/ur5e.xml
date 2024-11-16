@@ -240,6 +240,7 @@
 
   <!-- Force sensor for the gripper -->
   <force name="ur5e/wrist_force" site="attachment_site"/>
+  <torque name="ur5e/wrist_torque" site="attachment_site"/>
 
   <!-- Hand-E sensors (positions, quaternions, velocities) -->
   <framepos name="hande/pinch_pos" objtype="site" objname="pinch"/>

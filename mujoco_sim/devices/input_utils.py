@@ -65,7 +65,7 @@ def input2action(device):
     grasp = 1 if grasp else -1
 
     # Create action based on action space of individual robot
-    action = np.concatenate([dpos, [grasp], drotation])
+    action = np.concatenate([dpos, drotation, [grasp] ])
 
     # Return the action and grasp
     return action
