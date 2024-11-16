@@ -23,11 +23,11 @@ class Controller:
         self.rot_damping_ratio = 0.286  # Separate damping ratio for rotational control        
         self.error_tolerance_pos = 0.001
         self.error_tolerance_ori = 0.001
-        self.max_pos_error = None
-        self.max_ori_error = None
+        self.max_pos_error = 0.01
+        self.max_ori_error = 0.03
         self.method = "dynamics"
         self.inertia_compensation = False
-        self.pos_gains = (10, 10, 10)
+        self.pos_gains = (100, 100, 100)
         self.ori_gains = tuple(gain * 1/8 for gain in self.pos_gains)   
         self.pos_kd = None
         self.ori_kd = None
@@ -135,18 +135,12 @@ class Controller:
         dx_err = J_v @ dq
 
         x_err_norm = np.linalg.norm(x_err)
-        if x_err_norm < self.error_tolerance_pos:
-            x_err.fill(0)
-            dx_err.fill(0)
+
+        if ddx_max > 0.0 and x_err_norm > ddx_max:
+            x_err = np.clip(x_err, -ddx_max, ddx_max)
 
         x_err *= -kp_kv_pos[:, 0]
         dx_err *= -kp_kv_pos[:, 1]
-
-        if ddx_max > 0.0:
-            x_err_sq_norm = np.sum(x_err**2)
-            ddx_max_sq = ddx_max**2
-            if x_err_sq_norm > ddx_max_sq:
-                x_err *= ddx_max / np.sqrt(x_err_sq_norm)
 
         ddx = x_err + dx_err
 
@@ -158,18 +152,12 @@ class Controller:
         w_err = J_w @ dq
 
         ori_err_norm = np.linalg.norm(self.ori_err)
-        if ori_err_norm < self.error_tolerance_ori:
-            self.ori_err.fill(0)
-            w_err.fill(0)
+
+        if dw_max > 0.0 and ori_err_norm > dw_max:
+            self.ori_err = np.clip(self.ori_err, -dw_max, dw_max) 
 
         self.ori_err *= -kp_kv_ori[:, 0]
         w_err *= -kp_kv_ori[:, 1]
-
-        if dw_max > 0.0:
-            ori_err_sq_norm = np.sum(self.ori_err**2)
-            dw_max_sq = dw_max**2
-            if ori_err_sq_norm > dw_max_sq:
-                self.ori_err *= dw_max / np.sqrt(ori_err_sq_norm)
 
         dw = self.ori_err + w_err
 
