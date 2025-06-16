@@ -1,6 +1,6 @@
 # Noetic-UR5e
 
-Docker file and docker-compose for ROS noetic supporting packages for the UR5e and Robotiq Hand-e gripper. The compose file starts two containers: the one running ROS and another running [noVNC](https://novnc.com/info.html) to use the GUI-based tools rviz and Gazebo.
+Docker file and docker-compose for ROS noetic supporting packages for the UR5e and Robotiq Hand-e gripper.
 
 ## Installation Steps for Development
 
